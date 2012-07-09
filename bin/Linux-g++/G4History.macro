@@ -1,0 +1,49 @@
+/run/initialize
+/geometry/test/grid_test
+/geometry/test/run
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/gps/particle gamma
+/gps/direction 0.0 1.0 0.0
+/gps/pos/type Surface
+/gps/pos/shape Cylinder
+/gps/ang/type iso
+/gps/pos/radius 2.665 mm
+/gps/pos/halfy 0.36 mm
+/gps/ang/mintheta 0. deg
+/gps/ang/maxtheta 15.0 deg
+/gps/ene/mono 122 keV
+/vis/scene/create
+/vis/open DAWNFILE
+/vis/sceneHandler/create DAWNFILE
+/vis/sceneHandler/attach
+/vis/viewer/create ! ! 600
+/vis/drawVolume world
+/vis/scene/create
+/vis/scene/add/volume world
+/vis/scene/notifyHandlers
+/vis/scene/notifyHandlers
+/vis/sceneHandler/attach
+/vis/scene/add/volume
+/vis/scene/add/trajectories
+/tracking/storeTrajectory 1
+/vis/scene/notifyHandlers
+/vis/scene/add/hits
+/vis/scene/notifyHandlers
+/vis/viewer/set/style solid
+/vis/viewer/zoom 0.6
+/vis/viewer/set/background black
+/vis/viewer/set/viewpointThetaPhi 90 0
+/vis/viewer/set/hiddenEdge true
+/vis/scene/endOfEventAction accumulate -1
+/process/em/fluo true
+/process/em/auger true
+/process/em/pixe true
+/process/em/pixeXSmodel ecpssr_interpolated
+/run/beamOn 7500
+/vis/scene/notifyHandlers scene-0
+/vis/scene/notifyHandlers scene-1
+/run/abort
+/run/dumpCouples

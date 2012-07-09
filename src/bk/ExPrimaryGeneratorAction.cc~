@@ -1,0 +1,583 @@
+//
+// ********************************************************************
+// * DISCLAIMER                                                       *
+// *                                                                  *
+// * The following disclaimer summarizes all the specific disclaimers *
+// * of contributors to this software. The specific disclaimers,which *
+// * govern, are listed with their locations in:                      *
+// *   http://cern.ch/geant4/license                                  *
+// *                                                                  *
+// * Neither the authors of this software system, nor their employing *
+// * institutes,nor the agencies providing financial support for this *
+// * work  make  any representation or  warranty, express or implied, *
+// * regarding  this  software system or assume any liability for its *
+// * use.                                                             *
+// *                                                                  *
+// * This  code  implementation is the  intellectual property  of the *
+// * GEANT4 collaboration.                                            *
+// * By copying,  distributing  or modifying the Program (or any work *
+// * based  on  the Program)  you indicate  your  acceptance of  this *
+// * statement, and all its terms.                                    *
+// ********************************************************************
+//
+//
+// $Id: ExPrimaryGeneratorAction.cc,v 1.5 2002/05/14 01:50:31 asaim Exp $
+// GEANT4 tag $Name: geant4-07-01 $
+//
+
+#include "ExPrimaryGeneratorAction.hh"
+
+#include "G4Event.hh"
+#include "G4ParticleGun.hh"
+#include "G4ParticleTable.hh"
+#include "G4ParticleDefinition.hh"
+#include "G4ParticleTypes.hh"
+#include "globals.hh"
+
+#include "ExGlobalParameters.hh"
+#include "Randomize.hh"
+
+ExPrimaryGeneratorAction::ExPrimaryGeneratorAction()
+{
+  G4int n_particle = 1;
+  m_particleGun = new G4ParticleGun(n_particle);
+
+  //G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+  //G4String particleName;
+  //particleGun->SetParticleDefinition(particleTable->FindParticle(particleName="gamma"));
+
+  m_nSourceType = 0;
+
+  m_fParticleEnergy = 0.511*MeV;
+  m_particleGun->SetParticleEnergy(m_fParticleEnergy);
+
+  m_particleGun->SetParticleDefinition(G4Gamma::GammaDefinition());
+  m_particleGun->SetParticlePosition(G4ThreeVector(0.0, -1.5*cm, 0.0));
+}
+
+ExPrimaryGeneratorAction::~ExPrimaryGeneratorAction()
+{
+  delete m_particleGun;
+}
+
+void ExPrimaryGeneratorAction::SetParticleEnergy(G4double energy)
+{
+	m_fParticleEnergy = energy;
+ 	CGlobalParameters::initEnergy = energy;
+	m_particleGun->SetParticleEnergy(m_fParticleEnergy);
+}
+
+void ExPrimaryGeneratorAction::SetSourceType(G4int sourceType)
+{
+	m_nSourceType = sourceType;
+}
+
+void ExPrimaryGeneratorAction::SetSourceDirection(G4ThreeVector sourceDirection)
+{
+	m_vSourceDirection = sourceDirection;
+}
+
+void ExPrimaryGeneratorAction::SetSourceDirection(G4double theta, G4double phi)
+{
+	m_vSourceDirection.setX( sin(theta) * cos(phi) );
+	m_vSourceDirection.setY( sin(theta) * sin(phi) );
+	m_vSourceDirection.setZ( cos(theta) );
+}
+
+void ExPrimaryGeneratorAction::GenerateNeutronSourceEnergy(G4int detectorType)
+{
+	G4double pGamma = G4UniformRand();
+	G4double fGammaE = 0;
+
+	switch (detectorType)
+	{
+	case 1:
+		if ( pGamma < 0.023/(0.023 + 0.139 + 0.727) ) {fGammaE = 575.8*keV;}
+		else if ( pGamma < (0.023 + 0.139)/(0.023 + 0.139 + 0.727) ) {fGammaE = 651.3*keV;}
+		else {fGammaE = 558.6*keV;}
+
+		//G4cout << pGamma << 0.023/(0.023 + 0.139 + 0.727) << (0.023 + 0.139)/(0.023 + 0.139 + 0.727) << fGammaE << G4endl;
+		break;
+	case 2:
+		fGammaE = 368*keV;
+		break;
+	}
+	
+	SetParticleEnergy(fGammaE);
+}
+
+//void ExPrimaryGeneratorAction::GenerateParellelSourcePosition(G4double distance)
+//{
+//	G4double x0, y0, z0;
+//	G4double x1, y1, z1;
+//
+//	G4double det_x = CZTSIZEX;
+//	G4double det_y = CZTSIZEY;
+//	G4double det_z = CZTSIZEZ;
+//
+//	G4double detintv_x = DETINTVX;
+//	G4double detintv_y = DETINTVY;
+//	G4double detintv_z = DETINTVZ;
+//
+//	G4ThreeVector sourceDirection = -m_vSourceDirection;
+//
+//	G4double widthX = det_x*2 + detintv_x*2;
+//	G4double widthY = det_y*2 + detintv_y*2;
+//	G4double widthZ = det_z*2*2 + detintv_z*2;
+//	G4double Radius = sqrt( widthX*widthX + widthY*widthY +widthZ*widthZ ) / 2;
+//	
+//	G4double theta = sourceDirection.theta();
+//	G4double phi = sourceDirection.phi();
+//
+//	G4double rho = Radius * sqrt( G4UniformRand() );
+//	G4double phiphi = 2 * 3.1415926 * G4UniformRand();
+//
+//	G4ThreeVector destPosition = G4ThreeVector( rho * cos(phiphi), rho * sin(phiphi), distance );
+//
+//	destPosition = destPosition.rotateY(theta);
+//	destPosition = destPosition.rotateZ(phi);
+//
+//	m_vSourcePosition = destPosition + G4ThreeVector( 0, 0, det_z+detintv_z/2 );
+//}
+
+void ExPrimaryGeneratorAction::GenerateParellelSourcePosition(G4double distance)
+{
+	G4double x0, y0, z0;
+	G4double x1, y1, z1;
+
+	G4double det_x = CGlobalParameters::detsizeX;
+	G4double det_y = CGlobalParameters::detsizeX;
+	G4double det_z = CGlobalParameters::detsizeX;
+
+	G4double detintv_x = CGlobalParameters::detintvX;
+	G4double detintv_y = CGlobalParameters::detintvY;
+	G4double detintv_z = CGlobalParameters::detintvZ;
+
+	G4ThreeVector sourceDirection = -m_vSourceDirection;
+
+	G4double widthX = det_x*2 + detintv_x*2;
+	G4double widthY = det_y*2 + detintv_y*2;
+	G4double widthZ = det_z*2*2 + detintv_z*2;
+	G4double Radius = sqrt( widthX*widthX + widthY*widthY +widthZ*widthZ ) / 2;
+	
+	G4ThreeVector destPosition, touchPosition;
+	G4double theta, phi, rho, phiphi;
+	G4double ss, minss;
+	G4int touched = 0;
+	
+	while (!touched)
+	{
+		theta = sourceDirection.theta();
+		phi = sourceDirection.phi();
+
+		rho = Radius * sqrt( G4UniformRand() );
+		phiphi = 2 * 3.1415926 * G4UniformRand();
+
+		destPosition = G4ThreeVector( rho * cos(phiphi), rho * sin(phiphi), distance );
+
+		destPosition = destPosition.rotateY(theta);
+		destPosition = destPosition.rotateZ(phi);
+
+		minss=-1;
+
+		// geometry change
+		for ( int i=-1; i<=1; i++)
+		{
+			for ( int j=-1; j<=1; j++)
+			{
+				for ( int k=-1; k<=1; k+=2)
+				{
+					G4ThreeVector desp = destPosition - G4ThreeVector( i*detintv_x, j*detintv_y, k*(detintv_z/2+det_z) );
+					ss = CrossedTheCube(G4ThreeVector(det_x, det_y, det_z), desp, m_vSourceDirection);
+					if ( ss > 0 && ( minss < 0 || minss > ss ) )
+					{	minss = ss;
+						touched = 1;}
+				}
+			}
+		}		
+	}
+
+	m_vSourcePosition = destPosition + G4ThreeVector( 0, 0, det_z+detintv_z/2 );
+	m_vTouchPosition = destPosition + minss * m_vSourceDirection + G4ThreeVector( 0, 0, det_z+detintv_z/2 );
+}
+
+G4double ExPrimaryGeneratorAction::ProjectionArea()
+{
+	//G4double x0, y0, z0;
+	//G4double x1, y1, z1;
+
+	G4double det_x = CGlobalParameters::detsizeX;
+	G4double det_y = CGlobalParameters::detsizeX;
+	G4double det_z = CGlobalParameters::detsizeX;
+
+	G4double detintv_x = CGlobalParameters::detintvX;
+	G4double detintv_y = CGlobalParameters::detintvY;
+	G4double detintv_z = CGlobalParameters::detintvZ;
+
+	G4ThreeVector sourceDirection = -m_vSourceDirection;
+
+	G4double distance = 20*cm;
+
+	G4double widthX = det_x*2 + detintv_x*2;
+	G4double widthY = det_y*2 + detintv_y*2;
+	G4double widthZ = det_z*2*2 + detintv_z;
+
+	/*G4double Radius = 0;
+	for (int sx = -1; sx<=1; sx+=2)
+	{
+		for (int sy = -1; sy<=1; sy+=2)
+		{
+			G4ThreeVector vtmp = sourceDirection.cross( G4ThreeVector( sx*widthX, sy*widthY, widthZ  ) );
+			if ( Radius < vtmp.r()/2 ) Radius = vtmp.r()/2;
+		}
+	}*/
+	G4double Radius = sqrt( widthX*widthX + widthY*widthY +widthZ*widthZ ) / 2;
+	
+	G4ThreeVector destPosition;
+	G4double theta, phi, rho, phiphi;
+	G4double ss; //, xx, yy, zz;
+
+	G4int numberOfEvent = CGlobalParameters::numberOfEvent;
+	G4int nn = 0;
+
+	ss = 0;
+	for (int i=0; i<numberOfEvent; i++)
+	{
+		theta = sourceDirection.theta();
+		phi = sourceDirection.phi();
+
+		rho = Radius * sqrt( G4UniformRand() );
+		phiphi = 2 * 3.1415926 * G4UniformRand();
+
+		destPosition = G4ThreeVector( rho * cos(phiphi), rho * sin(phiphi), distance );
+
+		destPosition = destPosition.rotateY(theta);
+		destPosition = destPosition.rotateZ(phi);
+
+		// geometry change
+		for ( int i=-1; i<=1; i++)
+		{		
+			for ( int j=-1; j<=1; j++)
+			{
+				for ( int k=-1; k<=1; k+=2)
+				{
+					G4ThreeVector desp = destPosition - G4ThreeVector( i*detintv_x, j*detintv_y, k*(detintv_z/2+det_z) );
+					ss = CrossedTheCube(G4ThreeVector(det_x, det_y, det_z), desp, m_vSourceDirection);
+					if ( ss > 0 ) { nn++; break;}
+				}
+				if ( ss > 0 ) break;
+			}
+			if ( ss > 0 ) break;
+		}
+		//touched = (int)CrossedTheCube(G4ThreeVector(det_x, det_y, det_z), destPosition, m_vSourceDirection);
+		//if (touched>0) { nn++;}
+	}
+
+	G4double area = 3.1415926 * Radius * Radius * 1.0 * nn / numberOfEvent;
+
+	return area;
+}
+
+G4double ExPrimaryGeneratorAction::CrossedTheCube(G4ThreeVector detsize, G4ThreeVector pos, G4ThreeVector dir)
+{
+	G4double widthX = detsize.x()*2;
+	G4double widthY = detsize.y()*2;
+	G4double widthZ = detsize.z()*2;
+
+	G4double ss = 0, ssmin = -1;
+	G4double xx, yy, zz;
+
+	G4int sx = fabs(pos.x())/pos.x();
+	G4int sy = fabs(pos.y())/pos.y();
+	G4int sz = fabs(pos.z())/pos.z();
+
+	G4int isTouched = 0;
+
+	// G4cout << pos << dir << detintv << detsize << G4endl;
+
+	if ( dir.z() != 0 )
+	{
+		zz = sz*widthZ/2;
+		ss = (zz-pos.z())/dir.z();
+		xx = pos.x() + ss * dir.x();
+		yy = pos.y() + ss * dir.y();
+		//G4cout << "(1)" << " " << ss << " " << ssmin << " " << G4ThreeVector(xx, yy, zz) << G4endl;
+		if ( fabs(xx) < detsize.x() && fabs(yy) < detsize.y() ) 
+		{ 
+			//G4cout << *touchpos << " " << ss << " " << ssmin << " (1) " << G4endl;
+			if ( ssmin < 0 || ssmin > ss ) { ssmin = ss; }
+			//G4cout << *touchpos << " " << ss << " " << ssmin << " (1) " << G4endl;
+			isTouched = 1; 
+			
+		} 
+	}
+	
+	if ( dir.y() != 0 )
+	{
+		yy = sy*widthY/2;
+		ss = (yy-pos.y())/dir.y();
+		xx = pos.x() + ss * dir.x();
+		zz = pos.z() + ss * dir.z();
+		//G4cout << "(2)" << " " << ss << " " << ssmin << " " << G4ThreeVector(xx, yy, zz) << G4endl;
+		if ( fabs(xx) < detsize.x()	&& fabs(zz) < detsize.z() ) 
+		{ 
+			//G4cout << *touchpos << " " << ss << " " << ssmin << " (2) " << G4endl;
+			if ( ssmin < 0 || ssmin > ss ) { ssmin = ss; }
+			//G4cout << *touchpos << " " << ss << " " << ssmin << " (2) " << G4endl;
+			isTouched = 1; 	
+		} 
+
+		
+	}
+
+	if ( dir.x() != 0 )
+	{
+		xx = sx*widthX/2;
+		ss = (xx-pos.x())/dir.x();
+		yy = pos.y() + ss * dir.y();
+		zz = pos.z() + ss * dir.z();
+		//G4cout << "(3)" << " " << ss << " " << ssmin << " " << G4ThreeVector(xx, yy, zz) << G4endl;
+		if ( fabs(yy) < detsize.y() && fabs(zz) < detsize.z() ) 
+		{
+			//G4cout << *touchpos << " " << ss << " " << ssmin << " (3) " << G4endl;
+			if ( ssmin < 0 || ssmin > ss ) { ssmin = ss; }
+			//G4cout << *touchpos << " " << ss << " " << ssmin << " (3) " << G4endl;*/
+			isTouched = 1; 
+		} 
+	}
+
+	//G4cout << " " << isTouched << " " << ssmin << " (3) " << G4endl;
+	return isTouched*ssmin;
+}
+
+G4double ExPrimaryGeneratorAction::Transport(G4ThreeVector pos, G4ThreeVector dir, G4ThreeVector detsize)
+{
+	G4double ss = -1;
+	G4double sstmp;
+	G4double xx, yy, zz;
+
+	//G4cout << " --- " << pos << dir << detsize << G4endl;
+
+	if ( dir.x() != 0 )
+	{
+		sstmp = ( detsize.x() - pos.x() )  / dir.x();
+		yy = pos.y() + sstmp * dir.y();
+		zz = pos.z() + sstmp * dir.z();
+		if ( sstmp > 0 && fabs(yy) < detsize.y() && fabs(zz) < detsize.z() ) { if ( ss < 0 || ss > sstmp ) { ss = sstmp; } }
+		//G4cout << sstmp << " " << xx << " " << yy << " " << zz << " (11) " << pos << " " << dir << " " << ss << G4endl;
+
+		sstmp = ( -detsize.x() - pos.x() )  / dir.x();
+		yy = pos.y() + sstmp * dir.y();
+		zz = pos.z() + sstmp * dir.z();
+		if ( sstmp > 0 && fabs(yy) < detsize.y() && fabs(zz) < detsize.z() ) { if ( ss < 0 || ss > sstmp ) { ss = sstmp; } }
+		//G4cout << sstmp << " " << xx << " " << yy << " " << zz << " (12) " << ss << G4endl;
+	}
+
+	if ( dir.y() != 0 )
+	{
+		sstmp = ( detsize.y() - pos.y() ) / dir.y();
+		xx = pos.x() + sstmp * dir.x();
+		zz = pos.z() + sstmp * dir.z();
+		if ( sstmp > 0 && fabs(xx) < detsize.x() && fabs(zz) < detsize.z() ) { if ( ss < 0 || ss > sstmp ) { ss = sstmp; } }
+		//G4cout << sstmp << " " << xx << " " << yy << " " << zz << " (21) " << ss << G4endl;
+
+		sstmp = ( -detsize.y() - pos.y() ) / dir.y();
+		xx = pos.x() + sstmp * dir.x();
+		zz = pos.z() + sstmp * dir.z();
+		if ( sstmp > 0 && fabs(xx) < detsize.x() && fabs(zz) < detsize.z() ) { if ( ss < 0 || ss > sstmp ) { ss = sstmp; } }
+		//G4cout << sstmp << " " << xx << " " << yy << " " << zz << " (22) " << ss << G4endl;
+	}
+
+	if ( dir.z() != 0 )
+	{
+		sstmp = ( detsize.z() - pos.z() ) / dir.z();
+		xx = pos.x() + sstmp * dir.x();
+		yy = pos.y() + sstmp * dir.y();
+		if ( sstmp > 0 && fabs(yy) < detsize.y() && fabs(xx) < detsize.x() ) { if ( ss < 0 || ss > sstmp ) { ss = sstmp; } }
+		//G4cout << sstmp << " " << xx << " " << yy << " " << zz << " (31) " << ss << G4endl;
+
+		sstmp = ( -detsize.z() - pos.z() ) / dir.z();
+		xx = pos.x() + sstmp * dir.x();
+		yy = pos.y() + sstmp * dir.y();
+		if ( sstmp > 0 && fabs(yy) < detsize.y() && fabs(xx) < detsize.x() ) { if ( ss < 0 || ss > sstmp ) { ss = sstmp; } }
+		//G4cout << sstmp << " " << xx << " " << yy << " " << zz << " (32) " << ss << G4endl;
+	}
+
+	return ss;
+}
+
+void ExPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
+{
+	G4double det_x = CGlobalParameters::detsizeX;
+	G4double det_y = CGlobalParameters::detsizeY;
+	G4double det_z = CGlobalParameters::detsizeZ;
+
+	G4double det_dead = CGlobalParameters::detdeadZ;
+	det_z -= det_dead;
+	
+	G4double detintv_x = CGlobalParameters::detintvX;
+	G4double detintv_y = CGlobalParameters::detintvY;
+	G4double detintv_z = CGlobalParameters::detintvZ;	
+
+	G4double xx;
+	G4double yy;
+	G4double zz;
+	
+	G4double uu;
+	G4double vv;
+	G4double ww;
+
+	G4int idet;
+
+	G4double cossita;
+	G4double sinsita;
+	G4double phi;
+
+	switch (m_nSourceType)
+	{
+	case 0:
+		// .........................ooooooo00000oooooooo............................
+		// Uniform distribution in X-Y plane
+		//
+		uu = 0;
+		vv = 0;
+		ww = -1;
+
+		// idet = (int) (G4UniformRand() * 8);
+// 		while (idet == 8)
+// 		{
+// 			idet = (int) (G4UniformRand() * 8);
+// 		}
+		
+// 		G4int ny = (int)(idet/4);
+// 		G4int nx = idet - ny*4;
+
+		/*idet = (int) (G4UniformRand() * 4);
+		while (idet == 4)
+		{
+			idet = (int) (G4UniformRand() * 4);
+		}
+		
+		G4int ny = (int)(idet/2);
+		G4int nx = idet - ny*2;
+
+		xx = (2 * G4UniformRand() - 1) * det_x + detintv_x * nx;
+		yy = (2 * G4UniformRand() - 1) * det_y + detintv_y * ny;*/
+
+		xx = (2 * G4UniformRand() - 1) * det_x;
+		yy = (2 * G4UniformRand() - 1) * det_y;
+	
+		
+		zz = 20*cm;
+
+		m_particleGun->SetParticleMomentumDirection(G4ThreeVector(uu, vv, ww));
+		m_particleGun->SetParticlePosition(G4ThreeVector(xx, yy, zz));
+
+		break;
+	case 1:
+		// .........................ooooooo00000oooooooo............................
+		// Uniform distribution in X-Z plane
+		// 
+		uu = 0;
+		vv = 1;
+		ww = 0;
+
+		/*idet = (int) (G4UniformRand() * 6);
+		if (idet == 6)
+		{
+			xx = (2 * G4UniformRand() - 1) * det_x + detintv_x;
+			zz = (2 * G4UniformRand() - 1) * det_z;
+		}
+		else
+		{
+			G4int nx = (int)(idet/2) - 1;
+			G4int nz = idet - (nx+1)*2;
+
+			xx = (2 * G4UniformRand() - 1) * det_x + detintv_x * nx;
+			zz = (2 * G4UniformRand() - 1) * det_z + ( detintv_z + 2*det_z ) * nz;
+		}
+		
+		yy = -detintv_x - det_x - 0.5*cm;*/
+
+
+		m_particleGun->SetParticleMomentumDirection(G4ThreeVector(uu, vv, ww));
+		m_particleGun->SetParticlePosition(G4ThreeVector(xx, yy, zz));
+
+		break;	
+	case 3:
+		// .........................ooooooo00000oooooooo............................
+		// Point Source at z axis
+		//
+		{
+		G4double pixelsize = 1.72*mm / 2;
+		G4double dd = 12 * cm;
+
+		xx = G4UniformRand()*0.1*mm - 0.05*mm;
+		yy = G4UniformRand()*pixelsize*2 - pixelsize;
+		zz = -(dd+det_z);
+
+		G4double cossita0 = dd / sqrt( 2 * pixelsize * pixelsize  + dd * dd );
+		cossita = G4UniformRand() * ( 1 - cossita0 ) + cossita0;
+		//cossita = G4UniformRand() - 1;
+		if (fabs(cossita)>=1) cossita = 1;
+		sinsita = sqrt( 1 - cossita * cossita );
+		phi = 2 * pi * G4UniformRand();
+
+		uu = sinsita*cos(phi);
+		vv = sinsita*sin(phi);
+		ww = cossita;
+		m_particleGun->SetParticleMomentumDirection(G4ThreeVector(uu, vv, ww));
+		m_particleGun->SetParticlePosition(G4ThreeVector(xx, yy, zz));
+		
+		CGlobalParameters::initpos = G4ThreeVector(xx, yy, zz);
+		CGlobalParameters::initdir = G4ThreeVector(uu, vv, ww);
+		}
+		break;
+	case 4:
+		GenerateParellelSourcePosition(20*cm);
+
+		m_particleGun->SetParticleMomentumDirection(m_vSourceDirection);
+		m_particleGun->SetParticlePosition(m_vSourcePosition);
+		break;
+	case 6:
+		m_vSourceDirection = G4ThreeVector(det_x*2 + detintv_x*2, det_y*2 + detintv_y*2, det_z*2*2 + detintv_z*2);
+		m_vSourceDirection = m_vSourceDirection.unit();
+
+		GenerateParellelSourcePosition(20*cm);
+
+		m_particleGun->SetParticleMomentumDirection(m_vSourceDirection);
+		m_particleGun->SetParticlePosition(m_vSourcePosition);
+		break;
+	case 2:
+		// random direction all hitting center pixel
+		{
+		G4double halfpixelsize = 1.72*mm/2;
+
+		cossita = 2 * G4UniformRand() - 1;
+		if (fabs(cossita)>=1) cossita = 1;
+		sinsita = sqrt( 1 - cossita * cossita );
+		phi = 2 * pi * G4UniformRand();
+
+		uu = sinsita*cos(phi);
+		vv = fabs(sinsita*sin(phi));
+		ww = cossita;
+
+		xx = (2* G4UniformRand() - 1) * halfpixelsize;
+		yy = - halfpixelsize;
+		zz = (2* G4UniformRand() - 1) * det_z;
+
+		m_particleGun->SetParticleMomentumDirection(G4ThreeVector(uu, vv, ww));
+		m_particleGun->SetParticlePosition(G4ThreeVector(xx, yy, zz));
+		}
+		break;
+	}
+
+	// .........................ooooooo00000oooooooo............................
+
+
+	
+  
+	m_particleGun->GeneratePrimaryVertex(anEvent);
+}
+
+

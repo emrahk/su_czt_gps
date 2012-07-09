@@ -1,0 +1,129 @@
+ExParameters:ExParameters()
+{;}
+
+ExPhysicsList::~ExPhysicsList()
+{;}
+
+void ExPhysicsList::ConstructParticle()
+{
+  // In this method, static member functions should be called
+  // for all particles which you want to use.
+  // This ensures that objects of these particle types will be
+  // created in the program. 
+
+  //G4Geantino::GeantinoDefinition();
+
+  ConstructBosons();
+  ConstructLeptons();
+}
+
+void ExPhysicsList::ConstructProcess()
+{
+  // Define transportation process
+  AddTransportation();
+  // Construct EM process
+  ConstructEMProcess();
+  ConstructGeneral();
+}
+
+void ExPhysicsList::SetCuts()
+{
+  // uppress error messages even in case e/gamma/proton do not exist   
+  // Retrieve verbose level    
+  G4int temp = GetVerboseLevel(); 
+  SetVerboseLevel(temp);                                    
+                      
+  //  " G4VUserPhysicsList::SetCutsWithDefault" method sets 
+  //   the default cut value for all particle types 
+  SetCutsWithDefault();   
+
+  //SetCutValue(0.01*mm, "gamma");
+  //SetCutValue(0.01*mm, "e-");
+  //SetCutValue(0.01*mm, "e+");
+
+    
+}
+
+void ExPhysicsList::ConstructLeptons()
+{
+	// leptons
+	//  e+/-
+	G4Electron::ElectronDefinition();
+	G4Positron::PositronDefinition();
+}
+
+void ExPhysicsList::ConstructBosons()
+{
+	// gamma
+	G4Gamma::GammaDefinition();
+}
+
+void ExPhysicsList::ConstructEMProcess()
+{
+    theParticleIterator->reset();
+	while((*theParticleIterator)())
+	{
+		G4ParticleDefinition* particula = theParticleIterator->value();
+		G4ProcessManager* manager = particula->GetProcessManager();
+		G4String nombre = particula->GetParticleName();
+		
+		if(nombre=="gamma")
+		{
+			// declare processes
+			// standard processes
+			//manager->AddDiscreteProcess(new G4PhotoElectricEffect);
+			//manager->AddDiscreteProcess(new G4ComptonScattering);
+			//manager->AddDiscreteProcess(new G4GammaConversion);
+            //G4PolarizedComptonScattering is inherited from G4ComptonScattering
+            //manager->AddDiscreteProcess(new G4PolarizedComptonScattering);
+
+			// low energy processes
+		  manager->AddDiscreteProcess(new G4LowEnergyPhotoElectric);
+		  manager->AddDiscreteProcess(new G4LowEnergyCompton);
+//			manager->AddDiscreteProcess(new G4LowEnergyPolarizedCompton);
+			manager->AddDiscreteProcess(new G4LowEnergyGammaConversion);
+			manager->AddDiscreteProcess(new G4LowEnergyRayleigh);
+  		}
+		else if(nombre=="e-")
+		{
+			// declare processes
+		      manager->AddProcess(new G4MultipleScattering, -1, 1,1);
+		      manager->AddProcess(new G4LowEnergyIonisation,        -1, 2,2);
+		      manager->AddProcess(new G4LowEnergyBremsstrahlung,    -1,-1,3);
+		}
+		else if(nombre=="e+")
+		{
+			// declare processes (Low energy nor defined for positrons)
+		      manager->AddProcess(new G4MultipleScattering, -1, 1,1);
+		      manager->AddProcess(new G4LowEnergyIonisation,        -1, 2,2);
+		      manager->AddProcess(new G4LowEnergyBremsstrahlung,    -1,-1,3);
+		      manager->AddProcess(new G4eplusAnnihilation,   0,-1,4);
+
+		}else if((!particula->IsShortLived()) &&
+		           (particula->GetPDGCharge() != 0.0) && 
+		           (particula->GetParticleName() != "chargedgeantino"))
+		{
+			G4VProcess* aMultipleScattering = new G4MultipleScattering();
+			G4VProcess* anIonisation = new G4hIonisation();
+			manager->AddProcess(anIonisation);
+			manager->AddProcess(aMultipleScattering);
+		}
+	}
+}
+
+void ExPhysicsList::ConstructGeneral()
+{
+	theParticleIterator->reset();
+	G4Decay *decay=new G4Decay();
+	while((*theParticleIterator)())
+	{
+		G4ParticleDefinition* particula = theParticleIterator->value();
+		G4ProcessManager* manager = particula->GetProcessManager();
+		if(decay->IsApplicable(*particula))
+		{
+			manager->AddProcess(decay);
+			manager->SetProcessOrdering(decay, idxPostStep);
+			manager->SetProcessOrdering(decay, idxAtRest);
+		}
+	}
+}

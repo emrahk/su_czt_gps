@@ -1,0 +1,369 @@
+//
+// ********************************************************************
+// * DISCLAIMER                                                       *
+// *                                                                  *
+// * The following disclaimer summarizes all the specific disclaimers *
+// * of contributors to this software. The specific disclaimers,which *
+// * govern, are listed with their locations in:                      *
+// *   http://cern.ch/geant4/license                                  *
+// *                                                                  *
+// * Neither the authors of this software system, nor their employing *
+// * institutes,nor the agencies providing financial support for this *
+// * work  make  any representation or  warranty, express or implied, *
+// * regarding  this  software system or assume any liability for its *
+// * use.                                                             *
+// *                                                                  *
+// * This  code  implementation is the  intellectual property  of the *
+// * GEANT4 collaboration.                                            *
+// * By copying,  distributing  or modifying the Program (or any work *
+// * based  on  the Program)  you indicate  your  acceptance of  this *
+// * statement, and all its terms.                                    *
+// ********************************************************************
+//
+//
+// $Id: ExDetectorConstruction.cc,v 1.8 2003/10/06 08:59:11 maire Exp $
+// GEANT4 tag $Name: geant4-07-01 $
+//
+
+#include "ExDetectorConstruction.hh"
+#include "ExTrackerSD.hh"
+
+#include "G4Material.hh"
+#include "G4Box.hh"
+#include "G4Tubs.hh"
+#include "G4LogicalVolume.hh"
+#include "G4ThreeVector.hh"
+#include "G4PVPlacement.hh"
+#include "G4SDManager.hh"
+#include "G4AssemblyVolume.hh"
+#include "G4VisAttributes.hh"
+#include "G4tgrMessenger.hh"
+#include "G4tgbVolumeMgr.hh"
+#include "ExGlobalParameters.hh"
+#include "globals.hh"
+
+ExDetectorConstruction::ExDetectorConstruction()
+:  experimentalHall_log(0), CZTDet_log(0), CZTDead_log(0),
+  experimentalHall_phys(0), CZTDet_phys(0), CZTDead_phys(0),
+  collTungstenLogic(0), collTungstenPhys(0),
+  collLeadLogic(0), collLeadPhys(0),
+  collAluminumBigLogic(0), collAluminumBigPhys(0),
+  collAluminumSmallLogic(0), collAluminumSmallPhys(0),
+  collAluminumCoverLogic(0), collAluminumCoverPhys(0)
+
+{
+  messenger = new G4tgrMessenger;
+}
+  
+ExDetectorConstruction::~ExDetectorConstruction()
+{
+  delete messenger;
+}
+  
+G4VPhysicalVolume* ExDetectorConstruction::Construct()
+{
+  
+  //------------------------------------------------------ materials
+  
+  G4String symbol;             //a=mass of a mole;
+  G4double a, z, density;      //z=mean number of protons;  
+  // n=number of nucleons in an isotope;
+  G4int ncomponents, natoms;
+  G4double fractionmass;
+  
+  // Collimator materials.
+  // Pb and W and Fe and Al.
+  G4Material* Pb = new G4Material("Lead", z= 82., a= 207.19*g/mole, density= 11.35*g/cm3);
+  G4Material* W = new G4Material("Tungsten", z= 74., a= 183.84*g/mole, density= 19.25*g/cm3);
+  G4Material* Fe = new G4Material("Iron", z= 26., a= 55.845*g/mole, density= 7.874*g/cm3);
+  G4Material* Al =new G4Material("Aluminum", z=13., a= 27.*g/mole, density= 2.7*g/cm3 );
+
+  // air and H2O
+  G4Element* N  = new G4Element("Nitrogen",symbol="N" , z= 7., a= 14.01*g/mole);
+  G4Element* O  = new G4Element("Oxygen"  ,symbol="O" , z= 8., a= 16.00*g/mole);
+  G4Element* H  = new G4Element("Hydrogen",symbol="H" , z= 1., a= 1.01*g/mole);
+  
+  G4Material* Air = new G4Material("Air"  , density= 1.290*mg/cm3, ncomponents=2);
+  Air->AddElement(N, fractionmass=0.7);
+  Air->AddElement(O, fractionmass=0.3);
+  
+  G4Material* H2O = new G4Material("Water", density= 1.000*g/cm3, ncomponents=2);
+  H2O->AddElement(H, natoms=2);
+  H2O->AddElement(O, natoms=1);
+  
+  // vacuum
+  G4Material* Vacuum = new G4Material("Galactic", z=1., a=1.01*g/mole,density= universe_mean_density, kStateGas, 3.e-18*pascal, 2.73*kelvin);
+  
+  // CdZnTe
+  G4Element* Cd = new G4Element("Cadmium", symbol="Cd", z=48., a=112.411*g/mole);
+  G4Element* Zn = new G4Element("Zinc", symbol="Zn", z=30., a=65.39*g/mole);
+  G4Element* Te = new G4Element("Tellurium", symbol="Te", z=52., a=127.6*g/mole);
+  
+  G4Material* CZT = new G4Material("CZT", density=5.78*g/cm3, ncomponents=3);
+  CZT->AddElement(Cd, natoms=90);
+  CZT->AddElement(Zn, natoms=10);
+  CZT->AddElement(Te, natoms=100);
+  
+  // HgI2
+  G4Element* Hg = new G4Element("Mercury", symbol="Hg", z=80., a=200.59*g/mole);
+  G4Element* I = new G4Element("Iodine", symbol="I", z=53., a=126.90447*g/mole);
+  
+  G4Material* HgI2 = new G4Material("HgI2", density=6.4*g/cm3, ncomponents=2);
+  HgI2->AddElement(Hg, natoms=1);
+  HgI2->AddElement(I, natoms=2);
+  
+  // TlBr. Added by B.D. 14/09/10.
+  G4Element* Tl = new G4Element("Thallium", symbol="Tl", z=81., a=204.38*g/mole);
+  G4Element* Br = new G4Element("Bromine", symbol="Br", z=35., a=79.9*g/mole);
+  
+  G4Material* TlBr = new G4Material("TlBr", density=7.58*g/cm3, ncomponents=2);
+  TlBr->AddElement(Tl, natoms=1);
+  TlBr->AddElement(Br, natoms=1);
+  
+  //------------------------------------------------------ volumes
+  
+  //------------------------------ experimental hall (world volume)
+  
+  if (CGlobalParameters::enableTextGeom)
+  {
+    // if use text geometry to define the environment
+    G4String filename = "g4geom.txt";
+    G4tgbVolumeMgr* volmgr = G4tgbVolumeMgr::GetInstance();
+    volmgr->AddTextFile(filename);
+    experimentalHall_phys = volmgr->ReadAndConstructDetector();
+    experimentalHall_log = experimentalHall_phys->GetLogicalVolume();
+  }
+  else
+  {
+    // for simple use
+    G4double expHall_x = 30.0*m;
+    G4double expHall_y = 30.0*m;
+    G4double expHall_z = 30.0*m;
+    G4Box* experimentalHall_box = new G4Box("expHall_box",expHall_x,expHall_y,expHall_z);
+    experimentalHall_log = new G4LogicalVolume(experimentalHall_box, Vacuum,"expHall_log",0,0,0);
+    experimentalHall_phys = new G4PVPlacement(0,G4ThreeVector(), experimentalHall_log,"expHall",0,false,0);
+  experimentalHall_log->SetVisAttributes(G4VisAttributes::Invisible);
+  }
+  
+  
+  
+  //-------------- Detector Definitions! ---------------------//
+  G4double det_x = CGlobalParameters::detsizeX;
+  G4double det_y = CGlobalParameters::detsizeY;
+  G4double det_z = CGlobalParameters::detsizeZ;
+  
+  // Dead layer definition in z. Comment added by B.D. 14/09/10.
+  // Might be useful in the future, so I kept it.
+  G4double det_dead = CGlobalParameters::detdeadZ;
+  det_z -= det_dead;
+  
+  // Below is to create array of detectors.
+  // Might be useful in the future, so I kept it.
+  G4double detintv_x = CGlobalParameters::detintvX;
+  G4double detintv_y = CGlobalParameters::detintvY;
+  G4double detintv_z = CGlobalParameters::detintvZ;
+  
+  G4int detmatrix_x = (G4int)CGlobalParameters::detmatrixX;
+  G4int detmatrix_y = (G4int)CGlobalParameters::detmatrixY;
+  G4int detmatrix_z = (G4int)CGlobalParameters::detmatrixZ;
+  
+  G4int dettype = (G4int)CGlobalParameters::detType;
+  
+  G4Box* CZTDet_box = new G4Box("CZTDet_box", det_x/2, det_y/2, det_z/2);
+  
+  G4Box* CZTDead_box = 0;
+  if (det_dead>0)
+  {
+    CZTDead_box = new G4Box("CZTDead_box", det_x/2, det_y/2, det_dead/2);
+  }
+  
+  switch (dettype)
+  { 
+    case 0:
+      CZTDet_log = new G4LogicalVolume(CZTDet_box, CZT,"CZTDet_log",0,0,0);
+      if (det_dead>0)
+      {
+        CZTDead_log = new G4LogicalVolume(CZTDead_box, CZT,"CZTDead_log",0,0,0);
+      }
+      break;
+    case 1:
+      CZTDet_log = new G4LogicalVolume(CZTDet_box, HgI2,"CZTDet_log",0,0,0);
+      if (det_dead>0)
+      {
+        CZTDead_log = new G4LogicalVolume(CZTDead_box, HgI2,"CZTDead_log",0,0,0);
+      }
+      break;
+    case 2:
+      CZTDet_log = new G4LogicalVolume(CZTDet_box, TlBr,"CZTDet_log",0,0,0);
+      if (det_dead>0)
+      {
+        CZTDead_log = new G4LogicalVolume(CZTDead_box, TlBr,"CZTDead_log",0,0,0);
+      }
+      break;
+  }
+  
+  
+  //
+  // G4AssemblyVolume for the array
+  //
+  // Define detector array as assembly volumes
+  G4AssemblyVolume* assemblyDetector = new G4AssemblyVolume();
+  
+  // Rotation and translation of a plate inside the assembly
+  G4RotationMatrix * Ra = new G4RotationMatrix();
+  G4ThreeVector Ta;
+  
+  
+  // Rotation of the assembly inside the world
+  G4RotationMatrix * Rm = new G4RotationMatrix();
+  G4ThreeVector Tm;
+  
+  // Fill the assembly by the Detector
+  
+  Ta = G4ThreeVector(0,0,0);
+  assemblyDetector->AddPlacedVolume( CZTDet_log, Ta, Ra);
+  if ( det_dead != 0 )
+  {
+    Ta = G4ThreeVector( 0, 0, -(det_dead + det_z)/2 );
+    assemblyDetector->AddPlacedVolume( CZTDead_log, Ta, Ra);
+  }
+  
+  //G4ThreeVector vMatrix = CGlobalParameters::m_detMatrix;
+  for ( int i = 0; i < detmatrix_x; i++ )
+  {
+    for ( int j = 0; j < detmatrix_y; j++ )
+    {
+      for ( int k = 0; k < detmatrix_z; k++ )
+      {
+        Tm.setX( detintv_x * ( i - (detmatrix_x - 1)/2.0 ) );
+        Tm.setY( detintv_y * ( j - (detmatrix_y - 1)/2.0 ) );
+        Tm.setZ( ( detintv_z + ( det_z + det_dead ) ) * ( k  - (detmatrix_z - 1)/2.0 ) );
+
+        assemblyDetector->MakeImprint( experimentalHall_log, Tm,Rm );
+      }
+    }
+  }
+  
+  // ******************************************************************** //
+  // Collimator geometry added. O.A. and B.D. 14/09/10.
+
+  // Aluminum Cover towards the detector.
+  // This one taken as a reference.
+  // All collimator parts will be moved according to this volume.
+  G4double innerRadiusOfTheTubeAlC = 0.7*mm;
+  G4double outerRadiusOfTheTubeAlC = 23.0*mm;
+  G4double heightOfTheTubeAlC = 0.8*cm;
+  G4double startAngleOfTheTube = 0*deg;
+  G4double spanningAngleOfTheTube = 360*deg;
+  // Distance from the detector.
+  G4double distanceToDetector = 4*cm;
+  G4double coverAlX = 0.0*cm;
+  G4double coverAlY = 0.0*cm;
+  G4double coverAlZ = 2*cm;
+
+  G4Tubs* collAluminumCover = new G4Tubs("Coll_AluminumCover", innerRadiusOfTheTubeAlC,
+      outerRadiusOfTheTubeAlC, heightOfTheTubeAlC, startAngleOfTheTube, spanningAngleOfTheTube);
+  
+  collAluminumCoverLogic = new G4LogicalVolume(collAluminumCover, Al, "collAluminumCover",0,0,0);
+  
+  G4ThreeVector collAluminumCoverPos = G4ThreeVector(coverAlX, coverAlY, coverAlZ);
+  
+  collAluminumCoverPhys = new G4PVPlacement(0, collAluminumCoverPos, collAluminumCoverLogic,
+      "collAluminumCoverPhys", experimentalHall_log, false, 0);
+  
+  G4VisAttributes* visibleAluminumCover = new G4VisAttributes(G4Colour(0.0,1.0,0.0)); 
+  collAluminumCoverLogic->SetVisAttributes(G4VisAttributes::Invisible);//visibleAluminumCover);
+
+  // Tungsten.
+  G4double innerRadiusOfTheTube = 0.35*mm;
+  G4double outerRadiusOfTheTube = 1.15*mm;
+  G4double heightOfTheTube = 0.5*cm;
+  
+  G4Tubs* collTungsten = new G4Tubs("Coll_Tungsten", innerRadiusOfTheTube,
+      outerRadiusOfTheTube, heightOfTheTube, startAngleOfTheTube, spanningAngleOfTheTube);
+  
+  collTungstenLogic = new G4LogicalVolume(collTungsten, W, "collTungsten",0,0,0);
+  
+  G4ThreeVector collTungstenPos = G4ThreeVector(coverAlX, coverAlY, coverAlZ+heightOfTheTube+heightOfTheTubeAlC);
+  
+  collTungstenPhys = new G4PVPlacement(0, collTungstenPos, collTungstenLogic,
+      "collTungstenPhys", experimentalHall_log, false, 0);
+  
+  G4VisAttributes* visibleTungsten = new G4VisAttributes(G4Colour(1.0,0.0,1.0)); 
+  collTungstenLogic->SetVisAttributes(visibleTungsten);
+
+  // Lead.
+  G4double innerRadiusOfTheTubeL = 1.15*mm;
+  G4double outerRadiusOfTheTubeL = 10.0*mm;
+
+  G4Tubs* collLead = new G4Tubs("Coll_Lead", innerRadiusOfTheTubeL,
+      outerRadiusOfTheTubeL, heightOfTheTube, startAngleOfTheTube, spanningAngleOfTheTube);
+  
+  collLeadLogic = new G4LogicalVolume(collLead, Pb, "collLead",0,0,0);
+  
+  G4ThreeVector collLeadPos = G4ThreeVector(coverAlX, coverAlY, coverAlZ+heightOfTheTube+heightOfTheTubeAlC);
+  
+  collLeadPhys = new G4PVPlacement(0, collLeadPos, collLeadLogic,
+      "collLeadPhys", experimentalHall_log, false, 0);
+  
+  G4VisAttributes* visibleLead = new G4VisAttributes(G4Colour(1.0,1.0,0.0)); 
+  collLeadLogic->SetVisAttributes(visibleLead);
+
+  // Aluminum Big.
+  // Covers lead and tungsten parts.
+  G4double innerRadiusOfTheTubeAlB = 10.0*mm;
+  G4double outerRadiusOfTheTubeAlB = 23.0*mm;
+  G4double heightOfTheTubeAlB = 0.5*cm;
+
+  G4Tubs* collAluminumBig = new G4Tubs("Coll_AluminumBig", innerRadiusOfTheTubeAlB,
+      outerRadiusOfTheTubeAlB, heightOfTheTubeAlB, startAngleOfTheTube, spanningAngleOfTheTube);
+  
+  collAluminumBigLogic = new G4LogicalVolume(collAluminumBig, Al, "collAluminumBig",0,0,0);
+  
+  G4ThreeVector collAluminumBigPos = G4ThreeVector(coverAlX, coverAlY, coverAlZ+heightOfTheTubeAlB+heightOfTheTubeAlC);
+  
+  collAluminumBigPhys = new G4PVPlacement(0, collAluminumBigPos, collAluminumBigLogic,
+      "collAluminumBigPhys", experimentalHall_log, false, 0);
+  
+  G4VisAttributes* visibleAluminumBig = new G4VisAttributes(G4Colour(0.0,0.0,1.0)); 
+  collAluminumBigLogic->SetVisAttributes(visibleAluminumBig);
+
+  // Aluminum Small + Cover other side.
+  G4double innerRadiusOfTheTubeAlS = 1.0*mm;
+  G4double outerRadiusOfTheTubeAlS = 23.0*mm;
+  G4double heightOfTheTubeAlS = 1.2*cm;
+  
+  G4Tubs* collAluminumSmall = new G4Tubs("Coll_AluminumSmall", innerRadiusOfTheTubeAlS,
+      outerRadiusOfTheTubeAlS, heightOfTheTubeAlS, startAngleOfTheTube, spanningAngleOfTheTube);
+  
+  collAluminumSmallLogic = new G4LogicalVolume(collAluminumSmall, Al, "collAluminumSmall",0,0,0);
+  
+  G4ThreeVector collAluminumSmallPos = G4ThreeVector(coverAlX, coverAlY, coverAlZ+B+heightOfTheTubeAlC);
+  
+  collAluminumSmallPhys = new G4PVPlacement(0, collAluminumSmallPos, collAluminumSmallLogic,
+      "collAluminumSmallPhys", experimentalHall_log, false, 0);
+  
+  G4VisAttributes* visibleAluminumSmall = new G4VisAttributes(G4Colour(1.0,0.0,0.0)); 
+  collAluminumSmallLogic->SetVisAttributes(G4VisAttributes::Invisible);//visibleAluminumSmall);
+
+  // ******************************************************************** //
+  // Collimator ends here!
+
+
+
+  //------------------------------------------------ 
+  // Sensitive detectors
+  //------------------------------------------------ 
+  
+  G4SDManager* SDman = G4SDManager::GetSDMpointer();
+  
+  G4String trackerSDname = "Ex/TrackerSD";
+  ExTrackerSD* aTrackerSD = new ExTrackerSD( trackerSDname );
+  SDman->AddNewDetector( aTrackerSD );
+  CZTDet_log->SetSensitiveDetector( aTrackerSD );
+  
+  
+  //------------------------------------------------------------------
+  
+  return experimentalHall_phys;
+}

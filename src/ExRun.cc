@@ -1,0 +1,609 @@
+//
+// ********************************************************************
+// * License and Disclaimer                                           *
+// *                                                                  *
+// * The  Geant4 software  is  copyright of the Copyright Holders  of *
+// * the Geant4 Collaboration.  It is provided  under  the terms  and *
+// * conditions of the Geant4 Software License,  included in the file *
+// * LICENSE and available at  http://cern.ch/geant4/license .  These *
+// * include a list of copyright holders.                             *
+// *                                                                  *
+// * Neither the authors of this software system, nor their employing *
+// * institutes,nor the agencies providing financial support for this *
+// * work  make  any representation or  warranty, express or implied, *
+// * regarding  this  software system or assume any liability for its *
+// * use.  Please see the license in the file  LICENSE  and URL above *
+// * for the full disclaimer and the limitation of liability.         *
+// *                                                                  *
+// * This  code  implementation is the result of  the  scientific and *
+// * technical work of the GEANT4 collaboration.                      *
+// * By using,  copying,  modifying or  distributing the software (or *
+// * any work based  on the software)  you  agree  to acknowledge its *
+// * use  in  resulting  scientific  publications,  and indicate your *
+// * acceptance of all terms of the Geant4 Software license.          *
+// ********************************************************************
+//
+//
+// $Id: ExRun.cc,v 1.2 2006/06/29 17:45:35 gunter Exp $
+// GEANT4 tag $Name: geant4-08-01-patch-01 $
+//
+//=====================================================================
+//
+//  (Description)
+//    ExRun Class is for accumulating scored quantities which is 
+//  scored using G4MutiFunctionalDetector and G4VPrimitiveScorer.
+//  Accumulation is done using G4THitsMap object.
+//
+//    The constructor ExRun(const std::vector<G4String> mfdName)
+//  needs a vector filled with MultiFunctionalDetector names which
+//  was assigned at instantiation of MultiFunctionalDetector(MFD).
+//  Then ExRun constructor automatically scans primitive scorers
+//  in the MFD, and obtains collectionIDs of all collections associated
+//  to those primitive scorers. Futhermore, the G4THitsMap objects 
+//  for accumulating during a RUN are automatically created too.
+//  (*) Collection Name is same as primitive scorer name.
+// 
+//    The resultant information is kept inside ExRun objects as
+//  data members.
+//  std::vector<G4String> theCollName;            // Collection Name,
+//  std::vector<G4int> theCollID;                 // Collection ID,
+//  std::vector<G4THitsMap<G4double>*> theRunMap; // HitsMap for RUN.
+//
+//  The resualtant HitsMap objects are obtain using access method,
+//  GetHitsMap(..).
+//
+//=====================================================================
+
+#include "ExRun.hh"
+#include "G4SDManager.hh"
+#include "G4UIcommand.hh"
+
+#include "ExTrackerHit.hh"
+#include "Randomize.hh"
+#include "ExGlobalParameters.hh"
+#include <cmath>
+
+using namespace std;
+
+ExRun::ExRun(const std::vector<G4String> mfdName): G4Run()
+{
+  G4SDManager* SDman = G4SDManager::GetSDMpointer();
+  m_nCrossedEventNum = 0;
+  m_nHittedEventNum = 0;
+  m_nPeakEventNum = 0;
+} 
+
+ExRun::~ExRun()
+{}
+  
+void ExRun::RecordEvent(const G4Event* aEvent)
+{
+  
+  numberOfEvent++;  // This is an original line.
+  
+  if (numberOfEvent <= 1) { startT = time(NULL); lastT = startT; }
+  
+  if (!CGlobalParameters::displayTrack)
+  {
+    G4long totEventNum = (G4long)GetNumberOfEventToBeProcessed();
+    G4double fperc = numberOfEvent * 100.0 / totEventNum;
+    G4int percent = (G4int)(fperc);
+    
+    if ( numberOfEvent == 1 || percent == fperc || time(NULL) - lastT >=1 )  
+    {
+      G4cout << "\rProgress: [";
+      
+      for (int i = 0; i < (percent+1)/2; i++)
+      {
+        G4cout << ":";
+      }
+      
+      for (int i = (percent+1)/2; i < 50; i++)
+      {
+        G4cout << " ";
+      }
+      G4cout << "]" << percent << "%";
+      
+      time_t elpsT = time(NULL) - startT;
+      time_t leftT = (G4double)elpsT / (G4double)numberOfEvent * (G4double)totEventNum;
+      
+      char buffer [100];
+      sprintf(buffer, "  ==> TE: %02d:%02d:%02d / TR: %02d:%02d:%02d   ", (G4int)elpsT/3600, ((G4int)elpsT%3600)/60, (G4int)elpsT%60, (G4int)leftT/3600, ((G4int)leftT%3600)/60, (G4int)leftT%60);
+      G4cout << buffer;
+      
+      lastT = time(NULL);
+    }
+    G4cout.flush();
+    
+    if ( numberOfEvent == totEventNum ) G4cout << G4endl;
+  }
+    
+  //=============================
+  // HitsCollection of This Event
+  //============================
+  G4HCofThisEvent* HCE = aEvent->GetHCofThisEvent();
+  if (!HCE) return;
+  
+  G4SDManager* fSDM = G4SDManager::GetSDMpointer();
+  G4int collectionID = fSDM->GetCollectionID("trackerCollection");
+  ExTrackerHitsCollection * HC = (ExTrackerHitsCollection*)(HCE->GetHC(collectionID));
+  
+  G4int NbHits = HC->entries()-1;
+  
+  ExTrackerHit* lastHit = (*HC)[NbHits];
+  
+  G4double fTotDepEnergy = lastHit->GetTotDepEnergy();
+  G4double nEventType = lastHit->GetEventType();
+ 
+  if (lastHit->IsCrossed()){ m_nCrossedEventNum++; }
+  if (lastHit->IsInteracted()) { m_nHittedEventNum++; }
+  
+  G4double fInitParticleEnergy = CGlobalParameters::initEnergy;
+  G4ThreeVector vInitpos = CGlobalParameters::initpos;
+  G4ThreeVector vInitdir = CGlobalParameters::initdir;
+  
+  if ( fTotDepEnergy > fInitParticleEnergy*0.9999 ) {m_nPeakEventNum++; }
+  
+  if ( fTotDepEnergy > 0 )
+  {
+    if (CGlobalParameters::displayTrack) 
+    {
+      G4cout << "==> Total Deposited Energy: " << fTotDepEnergy/keV << "keV";
+      G4cout << " Initial Particle Energy: " << fInitParticleEnergy/keV << "keV";
+      G4cout << " If equal? " << (fTotDepEnergy == fInitParticleEnergy);
+      G4cout << " current peak events: " << m_nPeakEventNum << G4endl;
+    }    
+  }
+  
+  G4double det_x = CGlobalParameters::detsizeX;
+  G4double det_y = CGlobalParameters::detsizeY;
+  G4double det_z = CGlobalParameters::detsizeZ;
+  
+  G4double detintv_x = CGlobalParameters::detintvX;
+  G4double detintv_y = CGlobalParameters::detintvY;
+  G4double detintv_z = CGlobalParameters::detintvZ;
+  
+  G4int detmatrix_x = (G4int)CGlobalParameters::detmatrixX;
+  G4int detmatrix_y = (G4int)CGlobalParameters::detmatrixY;
+  G4int detmatrix_z = (G4int)CGlobalParameters::detmatrixZ;
+  
+  G4double energyRes = CGlobalParameters::energyRes;
+  G4double positionRes = CGlobalParameters::positionRes;
+  
+  //##################################################
+  /* if (CGlobalParameters::outputElectronCloud)
+  {	
+    int nclouds = 0;
+    double * px = new double [NbHits];
+    double * py = new double [NbHits];
+    double * pz = new double [NbHits];
+    string * pproc = new string [NbHits];
+    string * ppar = new string [NbHits];
+    double * pe = new double [NbHits];
+    double opx , opy  , opz , dist;
+ 
+    //Pixel numbers
+    int pixnum = 20;
+    double * pixenergy = new double[pixnum]; 
+    for (int i=0; i<pixnum ; i++) pixenergy[i]=0;
+    int pix = 0; 
+
+    for (int i=0; i<NbHits; i++)
+    {
+      ExTrackerHit * thisHit = (*HC)[i];
+      G4ThreeVector pos = thisHit->GetPos();
+      G4String proc = thisHit->GetProcessName();
+      G4String par = thisHit->GetParticleName();
+      G4double xx = pos.x();
+      G4double yy = pos.y();
+      G4double zz = pos.z();
+      G4double depE = thisHit->GetEdep();
+      
+      if (depE > 0)
+      {
+	pproc[nclouds] = proc;
+	ppar[nclouds] = par;
+        px[nclouds] = xx;
+        py[nclouds] = yy;
+        pz[nclouds] = zz;
+        pe[nclouds] = depE;       
+        nclouds++;
+      }	    
+    }
+    
+    int swap;
+    int * sA = new int [nclouds];  
+    for ( int i=0 ; i < nclouds ; i++ ) 
+    {
+      sA[i]=i;
+    }
+    
+    int cntrl = 1;
+    while (cntrl != 0){
+      for ( int i=0 ; i < (nclouds-1) ; i++ )
+      {
+	if ( px[sA[i]] < px[sA[i+1]] ){
+	  swap = sA[i];
+	  sA[i] = sA[i+1];
+	  sA[i+1] = swap;
+        }
+      }
+      
+      cntrl = 0;
+      for ( int i=0 ; i < (nclouds-1) ; i++ )
+      {
+	if ( px[sA[i]] < px[sA[i+1]] ){
+	  cntrl++;
+        }
+      }     
+    }
+
+    string * cntr = new string[3];
+    std::ofstream ofs1;
+    ofs1.open("output/pix_energy.txt",std::iostream::app);
+
+    if (nclouds>0) 
+    {
+      std::ofstream ofs;
+      ofs.open("output/electron_clouds1.txt",std::iostream::app);
+      for (int i=0 ; i<nclouds ; i++)
+      {
+	if (i!=0) { 
+	dist = sqrt (pow( px[sA[i]]-opx , 2) + pow( px[sA[i]]-opx , 2) + pow( px[sA[i]]-opx , 2)); 
+	cntr[0]=(dist>=0.1)?"1":"0";
+	cntr[1]=(dist>=0.2)?"1":"0";
+	cntr[2]=(dist>=0.5)?"1":"0";
+	ofs << cntr[0] << "  " << cntr[1] << "  " << cntr[2] << G4endl;
+	}
+	pix = ((px[sA[i]]+5)*pixnum)/10;
+	pixenergy[pix] += pe[sA[i]];
+	ofs << sA[i] << "  " << px[sA[i]] << "  " << pix << "  " <<  py[sA[i]] << "   " << pz[sA[i]] << "   " <<  pe[sA[i]]*1000 << "  " << pproc[sA[i]] << "  " << ppar[sA[i]] << "  ";
+	opx = px[sA[i]]; opy = py[sA[i]]; opz = pz[sA[i]];
+      }
+      ofs << G4endl << "**************************************************************" << G4endl;
+      ofs.close();
+    }
+    
+    for (int i=0; i<pixnum ; i++){
+      if (pixenergy[i]>0) ofs1 << i << "  " << pixenergy[i] << G4endl; 
+    } 
+    // ofs1 << G4endl;
+    ofs1.close();
+    
+    delete [] px;
+    delete [] py;
+    delete [] pz;
+    delete [] pe;
+    }*/
+  //###################################################################
+  //Main Output : pixenergy,bineclods,txteclouds
+  if (CGlobalParameters::pixenergy || CGlobalParameters::bineclouds || CGlobalParameters::txteclouds)
+  {	
+    int nclouds = 0;
+    double * px = new double [NbHits];
+    double * py = new double [NbHits];
+    double * pz = new double [NbHits];
+    double * pe = new double [NbHits];
+    string * pproc = new string [NbHits];
+    string * ppar = new string [NbHits];
+
+     //Pixel numbers
+    int pixnum = CGlobalParameters::pixnumber;
+    double * pixenergy = new double[pixnum]; 
+    for (int i=0; i<pixnum ; i++) pixenergy[i]=0;
+    int pix = 0; 
+
+    for (int i=0; i<NbHits; i++)
+    {
+      ExTrackerHit * thisHit = (*HC)[i];
+      G4ThreeVector pos = thisHit->GetPos();
+      G4String proc = thisHit->GetProcessName();
+      G4String par = thisHit->GetParticleName();
+      G4double xx = pos.x();
+      G4double yy = pos.y();
+      G4double zz = pos.z();
+      G4double depE = thisHit->GetEdep();
+      
+      if (depE > 0)
+      {
+	pproc[nclouds] = proc;
+	ppar[nclouds] = par;
+	px[nclouds] = xx;
+        py[nclouds] = yy;
+        pz[nclouds] = zz;
+        pe[nclouds] = depE;       
+        nclouds++;
+      }	    
+    }
+ 
+    if (nclouds>0) 
+    {
+      if(CGlobalParameters::bineclouds)
+      {
+	int tpx,tpy,tpz,tpe;
+	std::ofstream ofs;
+	ofs.open("output/electron_clouds.bin",std::iostream::app/* | std::iostream::binary*/);   
+	int cntr;
+	for (int i=0 ; i<nclouds ; i++)
+	{
+      	  tpx = px[i]*1000000;
+	  tpy = py[i]*1000000;
+	  tpz = pz[i]*1000000;
+	  tpe = pe[i]*1000000000;
+	  ofs.write((char *) (&i), sizeof(int));
+	  ofs.write((char *) (&tpx), sizeof(int));
+	  ofs.write((char *) (&tpy), sizeof(int));
+	  ofs.write((char *) (&tpz), sizeof(int));
+	  ofs.write((char *) (&tpe), sizeof(int));
+	}
+	ofs.close();
+      }
+
+      if(CGlobalParameters::txteclouds)
+      {
+	std::ofstream ofs;
+	ofs.open("output/electron_clouds.txt",std::iostream::app);   
+	for (int i=0 ; i<nclouds ; i++)
+	{
+	  ofs << i << "  " << px[i] << "  " <<  py[i] << "   " << pz[i] << "   " <<  pe[i]*1000000 << "  " << pproc[i] << "  " << ppar[i] << "  " << G4endl;
+	}
+	ofs << G4endl;
+	ofs.close();
+      }
+    
+      if (CGlobalParameters::pixenergy) 
+      {
+	std::ofstream ofs;
+	ofs.open("output/pix_energy.txt",std::iostream::app);
+	for (int i=0 ; i<nclouds ; i++)
+	{
+	  pix = (((px[i])+5)*pixnum)/10;
+	  pixenergy[pix] += pe[i];
+        }
+	for (int i=0 ; i<pixnum ; i++)
+	{
+	  if(pixenergy[i]!=0){
+	    ofs << pixenergy[i]*1000 << " " << i << endl;
+	  }
+        }
+        ofs.close();
+      }
+    }  
+    delete [] px;
+    delete [] py;
+    delete [] pz;
+    delete [] pe;
+  }
+  //########################################################################
+  
+
+  // Should we change binary format into text format? 14/09/10.
+  if (CGlobalParameters::outputElectronCloud)
+  {	
+    int nclouds = 0;
+    double * px = new double [NbHits];
+    double * py = new double [NbHits];
+    double * pz = new double [NbHits];
+    double * pe = new double [NbHits];
+
+    for (int i=0; i<NbHits; i++)
+    {
+      ExTrackerHit * thisHit = (*HC)[i];
+      G4ThreeVector pos = thisHit->GetPos();
+      G4double xx = pos.x();
+      G4double yy = pos.y();
+      G4double zz = pos.z();
+      G4double depE = thisHit->GetEdep();
+      
+      if (depE > 0)
+      {
+        px[nclouds] = xx;
+        py[nclouds] = yy;
+        pz[nclouds] = zz;
+        pe[nclouds] = depE;       
+        nclouds++;
+      }	    
+    }
+    
+    if (nclouds>0) 
+    {
+      std::ofstream ofs;
+      ofs.open("output/electron_clouds.dat",std::iostream::app | std::iostream::binary); 
+      ofs.write((char *) (&nclouds), sizeof(int));
+      ofs.write((char *) px, nclouds*sizeof(double));
+      ofs.write((char *) py, nclouds*sizeof(double));
+      ofs.write((char *) pz, nclouds*sizeof(double));
+      ofs.write((char *) pe, nclouds*sizeof(double));
+      ofs.close();
+    }   
+    delete [] px;
+    delete [] py;
+    delete [] pz;
+    delete [] pe;
+  }  
+
+  // Added by B.D. 13/09/10.
+  // Modified significantly. This will be the main output file for the simulation.
+  // For each event, we write number of hits (i.e. single, double pixel event etc.),
+  // pixel coordinate, x, y and z position for the event and the process name into a file.
+  // Most likely, other output files will be ignored. 
+  if (CGlobalParameters::outputImagingData || CGlobalParameters::outputImagingDataBin)
+  {
+    double * buff = new double [10];
+    int * dig_x = new int [NbHits];
+    int * dig_y = new int [NbHits];
+    double * dig_z = new double [NbHits];
+    double * dig_e = new double [NbHits];
+    int npix = 0;
+    int pixelhittedbefore;
+    double * PositionX = new double [NbHits];
+    double * PositionY = new double [NbHits];
+    G4String * ProcessName = new G4String [NbHits];
+     
+    double pixelsize = CGlobalParameters::pixelSize;
+    
+    for (int i=0; i<NbHits; i++)
+    {
+      ExTrackerHit * thisHit = (*HC)[i];
+
+      // Added by B.D. 13/09/10.
+	  // Get process and particle name.
+      G4String procname = thisHit->GetProcessName();
+      G4String parname = thisHit->GetParticleName();
+      
+      G4ThreeVector pos = thisHit->GetPos();
+      G4double xx = pos.x();
+      G4double yy = pos.y();
+      G4double zz = pos.z();
+      G4double depE = thisHit->GetEdep();
+      
+      if (depE>0) 
+      {
+        int ox, oy;
+        float ix, iy, iz;
+        float fx, fy, fz, oz, oe, sig_e;
+//        G4cout << xx << " " << yy << " " << zz << " Dep. E. " << depE << " Process Name -- >> " << procname << G4endl;
+        // found the position 
+        ix = floor(xx/detintv_x + detmatrix_x/2.0) - (detmatrix_x-1)/2.0;
+        fx = xx - ix * detintv_x;		
+        iy = floor(yy/detintv_y + detmatrix_y/2.0) - (detmatrix_y-1)/2.0; 
+        fy = yy - iy * detintv_y;
+        iz = floor(zz/(detintv_z + det_z) + detmatrix_z/2.0) - (detmatrix_z-1)/2.0;
+        fz = zz - iz * (detintv_z+det_z);
+        
+        // detector array
+        //			ox = (int)(floor(fx/pixelsize + 0.5) + 2 + ((detmatrix_x-1)/2.0 + ix)*4);
+        //			if (ox < 1) ox = 1; if (ox>4*detmatrix_x) ox = 4*detmatrix_x;
+        //			oy = (int)(floor(fy/pixelsize + 0.5) + 2 + ((detmatrix_y-1)/2.0 + iy)*4);
+        //			if (oy < 1) oy = 1; if (oy>4*detmatrix_y) oy = 4*detmatrix_y;
+        
+
+        // This is a crude fix for pixel numbering. B.D. 13/09/10.
+        if ((xx >= -5.0) && (xx < -2.5)) ox = 1;
+        if ((xx >= -2.5) && (xx < 0.0)) ox = 2;                
+        if ((xx >= 0.0) && (xx < 2.5)) ox = 3;
+        if ((xx >= 2.5) && (xx <= 5.0)) ox = 4;
+        
+        if ((yy >= -5.0) && (yy < -2.5)) oy = 1;
+        if ((yy >= -2.5) && (yy < 0.0)) oy = 2;                
+        if ((yy >= 0.0) && (yy < 2.5)) oy = 3;
+        if ((yy >= 2.5) && (yy <= 5.0)) oy = 4;
+        
+        // Get Process Name. B.D. 13/09/10.
+        oz = G4RandGauss::shoot(fabs(fz+det_z/2), positionRes);
+        if (oz < 0) oz = 0; if (oz > det_z) oz = det_z;
+        
+        sig_e = 662*keV*energyRes/2.35/sqrt(662*keV)*sqrt(depE);
+        oe = G4RandGauss::shoot(depE, sig_e);
+        
+        //		G4cout << fx/mm << ' ' << ox << ' ' << fy/mm << ' '<< oy << ' ' << fz/mm << ' ' << oz << G4endl;
+        
+        pixelhittedbefore = 0;
+        for (int j=0; j<npix; j++)
+        {
+          if ( ox == dig_x[j] && oy == dig_y[j] ) 
+          {
+            dig_z[j] = (dig_z[j]*dig_e[j] + oz*oe)/(dig_e[j]+oe);
+            dig_e[j] += oe;
+            pixelhittedbefore = 1;
+          }
+        }
+        
+        if (!pixelhittedbefore)
+        {
+          dig_x[npix] = ox;
+          dig_y[npix] = oy;
+          dig_z[npix] = oz;
+          dig_e[npix] = oe;
+          // Added by B.D. 13/09/10.
+          PositionX[npix] = xx;
+          PositionY[npix] = yy;
+        //  if (parname == "gamma")
+            ProcessName[npix] = procname;        
+          npix++;
+        }			
+      }
+    }
+    
+    if (npix > 0)
+    {
+      if (CGlobalParameters::outputImagingData)
+      {  
+        std::ofstream ofs;
+	ofs.open( "output/imaging_output.txt", std::ios::app );
+	if (ofs.fail()) { G4cout << "file output error" << G4endl; }
+        for (int i=0; i<npix; i++)
+        {
+          ofs << npix << '\t' 
+            << setprecision(3) << dig_e[i]/keV << '\t' 
+            << dig_x[i] << '\t'
+            << dig_y[i] << '\t' 
+            << setprecision(3) << PositionX[i] << '\t'
+            << setprecision(3) << PositionY[i] << '\t'
+            << abs(dig_z[i]-det_z) << '\t'
+            << ProcessName[i] << G4endl;
+       }
+       ofs.close();
+	
+      if (CGlobalParameters::outputImagingDataBin)
+      {
+        std::ofstream ofs;
+        
+        ofs.open( "output/imaging_output.bin", std::ios::app | std::ios::binary );
+        if (ofs.fail()) { G4cout << "file output error" << G4endl; }
+        for (int i=0; i<npix; i++)
+        {
+          ofs.write((char *)&npix, sizeof(int));
+          ofs.write((char *)(dig_e+i), sizeof(double));
+          ofs.write((char *)(dig_x+i), sizeof(int));
+          ofs.write((char *)(dig_y+i), sizeof(int));
+          ofs.write((char *)(PositionX+i), sizeof(double)); // Added on 09/22/10.
+          ofs.write((char *)(PositionY+i), sizeof(double)); // Added on 09/22/10.
+          ofs.write((char *)(dig_z+i), sizeof(double));
+          ofs.write((char *)(ProcessName+i),sizeof(ProcessName)); // Added on 09/22/10.
+          
+        }
+        ofs.close();
+      }
+    }
+    
+    delete [] buff;
+    delete [] dig_x;
+    delete [] dig_y;
+    delete [] dig_z;
+    delete [] dig_e;
+  }
+  } 
+  
+  if (CGlobalParameters::outputInitParameters)
+  {
+    std::ofstream ofs;
+    ofs.open( "output/init_parameters.txt", std::ios::app );
+    ofs << fInitParticleEnergy/keV << '\t' << vInitpos.x()/mm << '\t' << vInitpos.y()/mm << '\t' << vInitpos.z()/mm << '\t' << vInitdir.x() << '\t' << vInitdir.y() << '\t' << vInitdir.z() << G4endl;
+    ofs.close();
+  }
+  
+  if (CGlobalParameters::outputInitParaBin)
+  {
+    double initpara[7];
+    initpara[0] = fInitParticleEnergy;
+    initpara[1] = vInitpos.x();
+    initpara[2] = vInitpos.y();
+    initpara[3] = vInitpos.z();
+    initpara[4] = vInitdir.x();
+    initpara[5] = vInitdir.y();
+    initpara[6] = vInitdir.z();
+    
+    std::ofstream ofs;
+    ofs.open( "output/init_parameters.bin", std::ios::app );
+    ofs.write((char *) initpara, 7*sizeof(double));
+    ofs.close();
+  }
+  
+  
+  if (CGlobalParameters::displayTrack)
+  {
+    G4cout << "--------------------------------------- End of Event ----------------------------------------" << G4endl;
+  }	    
+}
+

@@ -1,0 +1,342 @@
+//
+// ********************************************************************
+// * License and Disclaimer                                           *
+// *                                                                  *
+// * The  Geant4 software  is  copyright of the Copyright Holders  of *
+// * the Geant4 Collaboration.  It is provided  under  the terms  and *
+// * conditions of the Geant4 Software License,  included in the file *
+// * LICENSE and available at  http://cern.ch/geant4/license .  These *
+// * include a list of copyright holders.                             *
+// *                                                                  *
+// * Neither the authors of this software system, nor their employing *
+// * institutes,nor the agencies providing financial support for this *
+// * work  make  any representation or  warranty, express or implied, *
+// * regarding  this  software system or assume any liability for its *
+// * use.  Please see the license in the file  LICENSE  and URL above *
+// * for the full disclaimer and the limitation of liability.         *
+// *                                                                  *
+// * This  code  implementation is the result of  the  scientific and *
+// * technical work of the GEANT4 collaboration.                      *
+// * By using,  copying,  modifying or  distributing the software (or *
+// * any work based  on the software)  you  agree  to acknowledge its *
+// * use  in  resulting  scientific  publications,  and indicate your *
+// * acceptance of all terms of the Geant4 Software license.          *
+// ********************************************************************
+//
+//
+// $Id: ExRun.cc,v 1.2 2006/06/29 17:45:35 gunter Exp $
+// GEANT4 tag $Name: geant4-08-01-patch-01 $
+//
+
+//=====================================================================
+//
+//  (Description)
+//    ExRun Class is for accumulating scored quantities which is 
+//  scored using G4MutiFunctionalDetector and G4VPrimitiveScorer.
+//  Accumulation is done using G4THitsMap object.
+//
+//    The constructor ExRun(const std::vector<G4String> mfdName)
+//  needs a vector filled with MultiFunctionalDetector names which
+//  was assigned at instantiation of MultiFunctionalDetector(MFD).
+//  Then ExRun constructor automatically scans primitive scorers
+//  in the MFD, and obtains collectionIDs of all collections associated
+//  to those primitive scorers. Futhermore, the G4THitsMap objects 
+//  for accumulating during a RUN are automatically created too.
+//  (*) Collection Name is same as primitive scorer name.
+// 
+//    The resultant information is kept inside ExRun objects as
+//  data members.
+//  std::vector<G4String> theCollName;            // Collection Name,
+//  std::vector<G4int> theCollID;                 // Collection ID,
+//  std::vector<G4THitsMap<G4double>*> theRunMap; // HitsMap for RUN.
+//
+//  The resualtant HitsMap objects are obtain using access method,
+//  GetHitsMap(..).
+//
+//=====================================================================
+
+#include "ExRun.hh"
+#include "G4SDManager.hh"
+#include "G4UIcommand.hh"
+
+#include "ExTrackerHit.hh"
+#include "Randomize.hh"
+#include "ExGlobalParameters.hh"
+
+//
+//  Constructor. 
+//   (The vector of MultiFunctionalDetector name has to given.)
+ExRun::ExRun(const std::vector<G4String> mfdName): G4Run()
+{
+  G4SDManager* SDman = G4SDManager::GetSDMpointer();
+
+  m_nCrossedEventNum = 0;
+  m_nHittedEventNum = 0;
+  m_nPeakEventNum = 0;
+  m_nSEscapeEventNum = 0;
+
+  m_nULayerHitted = 0;
+  m_nDLayerHitted = 0;
+  m_nBLayerHitted = 0;
+} 
+
+//
+// Destructor
+//    clear all data members.
+ExRun::~ExRun()
+{}
+
+void ExRun::InitFile()
+{
+	G4int runID = GetRunID();
+	m_sFileName = "output\\interactions_run" + G4UIcommand::ConvertToString(runID) + ".txt";
+
+	std::ofstream fpPhotoEM;
+	fpPhotoEM.open(m_sFileName);
+	fpPhotoEM.close();
+}
+
+//void ExRun::CloseFile()
+//{
+//	//if (fpPhotoEM) { fpPhotoEM.close(); }
+//	fpPhotoEM.close();
+//} 
+
+//
+//  RecordEvent is called at end of event.
+//  For scoring purpose, the resultant quantity in a event,
+//  is accumulated during a Run.
+void ExRun::RecordEvent(const G4Event* aEvent)
+{
+	numberOfEvent++;  // This is an original line.
+
+	G4long totEventNum = CGlobalParameters::numberOfEvent;
+	G4double fperc = numberOfEvent * 100 / totEventNum;
+	G4int percent = (G4int)(fperc);
+	if ( numberOfEvent == 1 || percent == fperc)  
+	{
+		G4cout << "\rProgess: [";
+		for (int i = 0; i < (percent+1)/2; i++)
+		{
+			G4cout << ":";
+		}
+		for (int i = (percent+1)/2; i < 50; i++)
+		{
+			G4cout << " ";
+		}
+		G4cout << "]" << percent << "%";
+	}
+	G4cout.flush();
+	if ( numberOfEvent == totEventNum ) G4cout << G4endl;
+	
+
+	//=============================
+	// HitsCollection of This Event
+	//============================
+	G4HCofThisEvent* HCE = aEvent->GetHCofThisEvent();
+	if (!HCE) return;
+
+	G4SDManager* fSDM = G4SDManager::GetSDMpointer();
+	G4int collectionID = fSDM->GetCollectionID("trackerCollection");
+	ExTrackerHitsCollection * HC = (ExTrackerHitsCollection*)(HCE->GetHC(collectionID));
+
+	G4int NbHits = HC->entries()-1;
+
+	ExTrackerHit* lastHit = (*HC)[NbHits];
+
+	G4double fInitParticleEnergy = CGlobalParameters::initEnergy; //lastHit->GetInitEnergy();
+	G4double fTotDepEnergy = lastHit->GetTotDepEnergy();
+	G4double nEventType = lastHit->GetEventType();
+	G4int nInitParID = lastHit->GetInitParID();
+	G4int nGammaHitNum = lastHit->GetGammaHitNumber();
+	G4int nHitPattern = lastHit->GetGammaHitPattern();
+	G4bool bCrossed = lastHit->IsCrossed();
+
+	if (bCrossed)
+	{
+		m_nCrossedEventNum++;
+	}
+
+	if ( nEventType > 0 && fTotDepEnergy > 0 )
+	{
+		m_nHittedEventNum++;
+		
+		G4double fResolutionCoef = 0.01 * sqrt( 662*keV );
+		if ( fTotDepEnergy > fInitParticleEnergy * (1-fResolutionCoef/sqrt(fInitParticleEnergy)*2) ) m_nPeakEventNum++;
+
+		if ( nEventType == 4 )
+		{
+		  G4double escapeEn = fInitParticleEnergy - fTotDepEnergy;
+		  if (escapeEn > 0.50*MeV && escapeEn < 0.52*MeV)
+		  {
+			  m_nSEscapeEventNum++;
+		  }
+		}
+
+
+		G4int hittedlayer = 0;
+
+		G4double det_z = CGlobalParameters::detsizeZ;
+		G4double det_dead = CGlobalParameters::detdeadZ;
+		det_z -= det_dead;
+
+		G4ThreeVector pos;
+
+		for (int i=0; i<NbHits; i++)
+		{
+			ExTrackerHit * thisHit = (*HC)[i];
+			pos = thisHit->GetPos();
+				
+			if ( thisHit->GetEdep() > 0 )
+			{
+			  if ( fabs(pos.getZ()) <= det_z ) { hittedlayer = hittedlayer | 1; }
+			  else { hittedlayer = hittedlayer | 2; }
+			}
+			//G4cout << hittedlayer << G4endl;
+		}
+
+		
+		if ( hittedlayer == 1 ) { m_nDLayerHitted++; }
+		if ( hittedlayer == 2 ) { m_nULayerHitted++; }
+		if ( hittedlayer == 3 ) { m_nBLayerHitted++; }
+	}
+
+	//
+	//.............oooooo0000ooooooo ............. 
+	// Event Store, Format: compton imaging
+	//
+	//
+	//.............oooooo0000ooooooo ............. 
+	// Event Store, Format: compton imaging
+	//
+	//std::ofstream fpPhotoEM;
+	//fpPhotoEM.open(m_sFileName,std::iostream::app);
+
+	G4double det_x = CGlobalParameters::detsizeX;
+	G4double det_y = CGlobalParameters::detsizeX;
+	G4double det_z = CGlobalParameters::detsizeX;
+	
+	int nclouds = 0;
+	double * px = new double [NbHits];
+	double * py = new double [NbHits];
+	double * pz = new double [NbHits];
+	double * pe = new double [NbHits];
+	for (int i=0; i<NbHits; i++)
+	{
+	    ExTrackerHit * thisHit = (*HC)[i];
+	    G4ThreeVector pos = thisHit->GetPos();
+	    G4double xx = pos.x();
+	    G4double yy = pos.y();
+	    G4double zz = pos.z();
+	    G4double depE = thisHit->GetEdep();
+            int chnum = CDetectorReadout::GetChannelNumber(xx, yy);
+
+	    if (depE > 0)
+	    {
+                px[nclouds] = xx;
+		py[nclouds] = yy;
+		pz[nclouds] = zz;
+		pe[nclouds] = depE;
+
+		nclouds++;
+            }	    
+	}
+
+	if (nclouds>0) 
+	{
+		std::ofstream ofp;
+		ofp.open("output/electron_cloud_interactions.dat",std::iostream::app | std::iostream::binary); 
+		ofp.write((char *) (&nclouds), sizeof(int));
+		ofp.write((char *) px, nclouds*sizeof(double));
+		ofp.write((char *) py, nclouds*sizeof(double));
+		ofp.write((char *) pz, nclouds*sizeof(double));
+		ofp.write((char *) pe, nclouds*sizeof(double));
+	}
+
+	delete [] px;
+	delete [] py;
+	delete [] pz;
+	delete [] pe;
+	
+
+	
+
+	/*double * buff = new double [10];
+
+	for (int i=0; i<NbHits; i++)
+	  {
+	    ExTrackerHit * thisHit = (*HC)[i];
+		
+	    G4ThreeVector pos = thisHit->GetPos();
+	    G4double xx = pos.x();
+	    G4double yy = pos.y();
+	    G4double zz = pos.z();
+	    G4double depE = thisHit->GetEdep();
+	    
+	    //G4cout << xx << yy << zz << G4endl;
+	    if (depE>0) 
+	      {
+		int ox, oy, ilayer;
+		float fx, fy, fz, oz, oe, sig_e;
+		
+		//G4cout << xx << yy << zz << "dd" << G4endl;
+		if (fabs(xx)>det_x) { fx = xx - xx/fabs(xx)*(detintv_x-det_x*2); }
+		else { fx = xx; }
+		if (fabs(yy)>det_y) { fy = yy - yy/fabs(yy)*(detintv_y-det_y*2); }
+		else { fy = yy; }
+		if (fabs(zz)>det_z) { ilayer = 1; fz = zz - (detintv_z+2*det_z); }
+		else {ilayer = 0; fz = zz;}
+
+		//ox = int( fabs(fx+3*det_x)/2/det_x*11 )+1+ilayer*33;
+		//oy = int( fabs(fy-3*det_y)/2/det_y*11 )+1+ilayer*33;
+		ox = int( fabs(fx+det_x)/2/det_x*11 )+1+ilayer*33;
+		oy = int( fabs(fy+det_y)/2/det_y*11 )+1+ilayer*33;
+		oz = G4RandGauss::shoot(fabs(fz-det_z), 0.005*mm);
+		sig_e = 662*keV*0.007/2.35/sqrt(662*keV)*sqrt(depE);
+		oe = G4RandGauss::shoot(depE, sig_e);
+		
+		pixelhittedbefore = 0;
+		for (int j=0; j<npix; j++)
+		  {
+		    if ( ox == dig_x[j] && oy == dig_y[j] ) 
+		      {
+			dig_z[j] = (dig_z[j]*dig_e[j] + oz*oe)/(dig_e[j]+oe);
+			dig_e[j] += oe;
+			pixelhittedbefore = 1;
+		      }
+		  }
+		
+		if (!pixelhittedbefore)
+		  {
+		    npix += 1;
+		    dig_x[npix-1] = ox;
+		    dig_y[npix-1] = oy;
+		    dig_z[npix-1] = oz;
+		    dig_e[npix-1] = oe;
+		  }			
+	      }
+	  }
+
+	//G4cout << npix << G4endl;
+	if (npix == 1)
+	{
+	  std::ofstream ofs;
+	  
+	  ofs.open( "output/pc_ratio_study.dat", std::ios::binary | std::ios::app );
+	  //if (ofs.fail()) { G4cout << "file output error" << G4endl; }
+	  //else { G4cout << "file opened" << G4endl;}
+	  for (int i=0; i<npix; i++)
+	    {
+	      buff[0] = npix;
+	      buff[1] = dig_x[i]*100+dig_y[i];
+	      buff[2] = dig_z[i];
+	      buff[3] = dig_e[i];
+	      ofs.write((char *)buff, 4*sizeof(double));
+	    }
+
+	  ofs.close();
+	}	*/
+
+}
+
+

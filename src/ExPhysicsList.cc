@@ -1,0 +1,366 @@
+//
+// ********************************************************************
+// * DISCLAIMER                                                       *
+// *                                                                  *
+// * The following disclaimer summarizes all the specific disclaimers *
+// * of contributors to this software. The specific disclaimers,which *
+// * govern, are listed with their locations in:                      *
+// *   http://cern.ch/geant4/license                                  *
+// *                                                                  *
+// * Neither the authors of this software system, nor their employing *
+// * institutes,nor the agencies providing financial support for this *
+// * work  make  any representation or  warranty, express or implied, *
+// * regarding  this  software system or assume any liability for its *
+// * use.                                                             *
+// *                                                                  *
+// * This  code  implementation is the  intellectual property  of the *
+// * GEANT4 collaboration.                                            *
+// * By copying,  distributing  or modifying the Program (or any work *
+// * based  on  the Program)  you indicate  your  acceptance of  this *
+// * statement, and all its terms.                                    *
+// ********************************************************************
+//
+//
+// $Id: ExPhysicsList.cc,v 1.5 2002/01/09 17:23:48 ranjard Exp $
+// GEANT4 tag $Name: geant4-07-01 $
+//
+// 
+
+// Modifications:
+// Last modified by B.D. 13/09/10. Uses N02 as a template!
+// Added Livermore Low energy electromagnetic processes. 13/09/10.
+// Added cut values from UM simulation code. 13/09/10.
+
+
+ 
+#include "globals.hh"
+#include "ExPhysicsList.hh"
+
+#include "G4ProcessManager.hh"
+#include "G4ParticleTypes.hh"
+#include "ExGlobalParameters.hh"
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+ExPhysicsList::ExPhysicsList():  G4VUserPhysicsList()
+{
+  defaultCutValue = 1.0*cm;
+   SetVerboseLevel(1);
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+ExPhysicsList::~ExPhysicsList()
+{}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void ExPhysicsList::ConstructParticle()
+{
+  // In this method, static member functions should be called
+  // for all particles which you want to use.
+  // This ensures that objects of these particle types will be
+  // created in the program. 
+
+  ConstructBosons();
+  ConstructLeptons();
+  ConstructMesons();
+  ConstructBaryons();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void ExPhysicsList::ConstructBosons()
+{
+  // pseudo-particles
+  G4Geantino::GeantinoDefinition();
+  G4ChargedGeantino::ChargedGeantinoDefinition();
+
+  // gamma
+  G4Gamma::GammaDefinition();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void ExPhysicsList::ConstructLeptons()
+{
+  // leptons
+  //  e+/-
+  G4Electron::ElectronDefinition();
+  G4Positron::PositronDefinition();
+  // mu+/-
+  G4MuonPlus::MuonPlusDefinition();
+  G4MuonMinus::MuonMinusDefinition();
+  // nu_e
+  G4NeutrinoE::NeutrinoEDefinition();
+  G4AntiNeutrinoE::AntiNeutrinoEDefinition();
+  // nu_mu
+  G4NeutrinoMu::NeutrinoMuDefinition();
+  G4AntiNeutrinoMu::AntiNeutrinoMuDefinition();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void ExPhysicsList::ConstructMesons()
+{
+  //  mesons
+  //    light mesons
+  G4PionPlus::PionPlusDefinition();
+  G4PionMinus::PionMinusDefinition();
+  G4PionZero::PionZeroDefinition();
+  G4Eta::EtaDefinition();
+  G4EtaPrime::EtaPrimeDefinition();
+  G4KaonPlus::KaonPlusDefinition();
+  G4KaonMinus::KaonMinusDefinition();
+  G4KaonZero::KaonZeroDefinition();
+  G4AntiKaonZero::AntiKaonZeroDefinition();
+  G4KaonZeroLong::KaonZeroLongDefinition();
+  G4KaonZeroShort::KaonZeroShortDefinition();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void ExPhysicsList::ConstructBaryons()
+{
+  //  barions
+  G4Proton::ProtonDefinition();
+  G4AntiProton::AntiProtonDefinition();
+
+  G4Neutron::NeutronDefinition();
+  G4AntiNeutron::AntiNeutronDefinition();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void ExPhysicsList::ConstructProcess()
+{
+  AddTransportation();
+  ConstructEM();
+  ConstructGeneral();
+  AddStepMax();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+#include "G4ComptonScattering.hh"
+#include "G4GammaConversion.hh"
+#include "G4PhotoElectricEffect.hh"
+#include "G4RayleighScattering.hh" 
+
+// low energy gamma uses Livermore. 13/09/10.
+#include "G4LivermorePhotoElectricModel.hh"
+#include "G4LivermoreComptonModel.hh"
+#include "G4LivermorePolarizedComptonModel.hh" // alternative for polarized photons
+#include "G4LivermoreGammaConversionModel.hh"
+#include "G4LivermoreRayleighModel.hh"
+#include "G4LivermorePolarizedRayleighModel.hh" // alternative for polarized photons
+
+// low energy e- uses Livermore. 13/09/10. 
+#include "G4UniversalFluctuation.hh"
+#include "G4LivermoreIonisationModel.hh"
+#include "G4LivermoreBremsstrahlungModel.hh"
+
+#include "G4eMultipleScattering.hh"
+#include "G4eIonisation.hh"
+#include "G4eBremsstrahlung.hh"
+#include "G4eplusAnnihilation.hh"
+
+#include "G4MuMultipleScattering.hh"
+#include "G4MuIonisation.hh"
+#include "G4MuBremsstrahlung.hh"
+#include "G4MuPairProduction.hh"
+
+#include "G4hMultipleScattering.hh"
+#include "G4hIonisation.hh"
+#include "G4hBremsstrahlung.hh"
+#include "G4hPairProduction.hh"
+
+#include "G4ionIonisation.hh"
+//########################################3
+#include "G4KleinNishinaModel.hh"
+#include "G4PEEffectFluoModel.hh"
+#include "G4LossTableManager.hh"
+#include "G4UAtomicDeexcitation.hh"
+#include "G4EmProcessOptions.hh"
+#include "G4XrayRayleighModel.hh"
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void ExPhysicsList::ConstructEM()
+{
+  theParticleIterator->reset();
+  while( (*theParticleIterator)() ){
+    G4ParticleDefinition* particle = theParticleIterator->value();
+    G4ProcessManager* pmanager = particle->GetProcessManager();
+    G4String particleName = particle->GetParticleName();
+     
+    if (particleName == "gamma") {
+      // gamma        
+      G4PhotoElectricEffect* thePhotoElectricEffect = new G4PhotoElectricEffect();
+      G4LivermorePhotoElectricModel* theLivermorePhotoElectricModel = new G4LivermorePhotoElectricModel();
+      thePhotoElectricEffect->SetModel(new G4PEEffectFluoModel());
+      //thePhotoElectricEffect->SetModel(theLivermorePhotoElectricModel);
+      pmanager->AddDiscreteProcess(thePhotoElectricEffect);
+      
+      G4ComptonScattering* theComptonScattering = new G4ComptonScattering();
+      G4LivermoreComptonModel* theLivermoreComptonModel = new G4LivermoreComptonModel();
+      theComptonScattering->SetModel(new G4KleinNishinaModel());
+      //theComptonScattering->SetModel(theLivermoreComptonModel);
+      pmanager->AddDiscreteProcess(theComptonScattering);
+      
+      G4GammaConversion* theGammaConversion = new G4GammaConversion();
+      G4LivermoreGammaConversionModel* theLivermoreGammaConversionModel = new G4LivermoreGammaConversionModel();
+      theGammaConversion->SetModel(theLivermoreGammaConversionModel);
+      pmanager->AddDiscreteProcess(theGammaConversion);
+
+      G4RayleighScattering* theRayleigh = new G4RayleighScattering();
+      G4LivermoreRayleighModel* theRayleighModel = new G4LivermoreRayleighModel();
+      //theRayleigh->SetModel(theRayleighModel);
+      theRayleigh->SetModel(new G4XrayRayleighModel());
+      pmanager->AddDiscreteProcess(theRayleigh);
+      
+      pmanager->AddProcess(new G4StepLimiter(), -1, -1, 5);
+      
+    } else if (particleName == "e-") {
+      //electron
+      G4eMultipleScattering* msc = new G4eMultipleScattering();
+      msc->SetStepLimitType(fUseDistanceToBoundary);
+      pmanager->AddProcess(msc, -1, 1, 1);
+      
+      // Ionisation
+      G4eIonisation* eIoni = new G4eIonisation();
+      G4LivermoreIonisationModel* theLivermoreIonisationModel = new G4LivermoreIonisationModel();
+      eIoni->SetEmModel(theLivermoreIonisationModel);
+      int a = 0.01;
+      eIoni->SetStepFunction(0.0001, 0.01*um); ////// 0,0001 0,01   
+      eIoni->SetMinKinEnergy(250*eV);
+      pmanager->AddProcess(eIoni,                 -1, 2, 2);
+      
+      // Bremsstrahlung
+      G4eBremsstrahlung* eBrem = new G4eBremsstrahlung();
+      eBrem->SetEmModel(new G4LivermoreBremsstrahlungModel());
+      pmanager->AddProcess(eBrem,         -1,-3, 3);
+
+      pmanager->AddProcess(new G4StepLimiter(), -1, -1, 4);
+
+    } else if (particleName == "e+") {
+      //positron
+      pmanager->AddProcess(new G4eMultipleScattering, -1, 1, 1);
+      pmanager->AddProcess(new G4eIonisation,         -1, 2, 2);
+      pmanager->AddProcess(new G4eBremsstrahlung,     -1, 3, 3);
+      pmanager->AddProcess(new G4eplusAnnihilation,    0,-1, 4);
+
+    } else if( particleName == "mu+" || 
+               particleName == "mu-"    ) {
+      //muon  
+      pmanager->AddProcess(new G4MuMultipleScattering, -1, 1, 1);
+      pmanager->AddProcess(new G4MuIonisation,         -1, 2, 2);
+      pmanager->AddProcess(new G4MuBremsstrahlung,     -1, 3, 3);
+      pmanager->AddProcess(new G4MuPairProduction,     -1, 4, 4);       
+             
+    } else if( particleName == "proton" ||
+               particleName == "pi-" ||
+               particleName == "pi+"    ) {
+      //proton  
+      pmanager->AddProcess(new G4hMultipleScattering, -1, 1, 1);
+      pmanager->AddProcess(new G4hIonisation,         -1, 2, 2);
+      pmanager->AddProcess(new G4hBremsstrahlung,     -1, 3, 3);
+      pmanager->AddProcess(new G4hPairProduction,     -1, 4, 4);       
+     
+    } else if( particleName == "alpha" || 
+	       particleName == "He3" )     {
+      //alpha 
+      pmanager->AddProcess(new G4hMultipleScattering, -1, 1, 1);
+      pmanager->AddProcess(new G4ionIonisation,       -1, 2, 2);
+     
+    } else if( particleName == "GenericIon" ) { 
+      //Ions 
+      pmanager->AddProcess(new G4hMultipleScattering, -1, 1, 1);
+      pmanager->AddProcess(new G4ionIonisation,       -1, 2, 2);
+                 
+    } else if ((!particle->IsShortLived()) &&
+	       (particle->GetPDGCharge() != 0.0) && 
+	       (particle->GetParticleName() != "chargedgeantino")) {
+      //all others charged particles except geantino
+      pmanager->AddProcess(new G4hMultipleScattering, -1, 1, 1);
+      pmanager->AddProcess(new G4hIonisation,         -1, 2, 2);
+    }
+  }
+
+  G4EmProcessOptions* emOpt;
+  //emOpt->SetMinEnergy(10*eV);
+  //emOpt->SetDEDXBinning(12*10);
+  //emOpt->SetLambdaBinning(12*10);
+
+  G4VAtomDeexcitation* de = new G4UAtomicDeexcitation;
+  G4UAtomicDeexcitation* di = new G4UAtomicDeexcitation;
+  //di->SetCutForAugerElectrons(250*eV);
+  //di->SetCutForSecondaryPhotons(250*eV);
+  //de->SetPIXE(true);
+  //G4LossTableManager::Instance()->SetAtomDeexcitation(de);
+  G4LossTableManager::Instance()->SetAtomDeexcitation(di);
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+#include "G4Decay.hh"
+
+void ExPhysicsList::ConstructGeneral()
+{
+  // Add Decay Process
+  G4Decay* theDecayProcess = new G4Decay();
+  theParticleIterator->reset();
+  while( (*theParticleIterator)() ){
+    G4ParticleDefinition* particle = theParticleIterator->value();
+    G4ProcessManager* pmanager = particle->GetProcessManager();
+    if (theDecayProcess->IsApplicable(*particle)) { 
+      pmanager ->AddProcess(theDecayProcess);
+      // set ordering for PostStepDoIt and AtRestDoIt
+      pmanager ->SetProcessOrdering(theDecayProcess, idxPostStep);
+      pmanager ->SetProcessOrdering(theDecayProcess, idxAtRest);
+    }
+  }
+}
+  
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+#include "G4StepLimiter.hh"
+#include "G4UserSpecialCuts.hh"
+
+void ExPhysicsList::AddStepMax()
+{
+  // Step limitation seen as a process
+  G4StepLimiter* stepLimiter = new G4StepLimiter();
+  ////G4UserSpecialCuts* userCuts = new G4UserSpecialCuts();
+  
+  theParticleIterator->reset();
+  while ((*theParticleIterator)()){
+      G4ParticleDefinition* particle = theParticleIterator->value();
+      G4ProcessManager* pmanager = particle->GetProcessManager();
+
+      if (particle->GetPDGCharge() != 0.0)
+        {
+	  pmanager ->AddDiscreteProcess(stepLimiter);
+	  ////pmanager ->AddDiscreteProcess(userCuts);
+        }
+  }
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void ExPhysicsList::SetCuts()
+{
+  //G4VUserPhysicsList::SetCutsWithDefault method sets 
+  //the default cut value for all particle types 
+  //
+  SetCutsWithDefault();
+
+  SetCutValue(0.01*mm, "gamma");
+  SetCutValue(0.001*mm, "e-");
+  SetCutValue(0.001*mm, "e+");
+  
+  if (verboseLevel>0) DumpCutValuesTable();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -1,0 +1,239 @@
+#include "ExGlobalParameters.hh"
+#include <fstream>
+ 
+//using namespace std;
+
+double CGlobalParameters::detType = 0; // 0: CZT, 1: HgI2, 2: TlBr
+
+double CGlobalParameters::detsizeX = 10*mm;
+double CGlobalParameters::detsizeY = 10*mm;
+double CGlobalParameters::detsizeZ = 5*mm;
+
+double CGlobalParameters::detdeadZ = 0;
+
+double CGlobalParameters::detintvX = 12*mm;
+double CGlobalParameters::detintvY = 12*mm;
+double CGlobalParameters::detintvZ = 1*mm;
+
+double CGlobalParameters::detmatrixX = 1;
+double CGlobalParameters::detmatrixY = 1;
+double CGlobalParameters::detmatrixZ = 1;
+
+double CGlobalParameters::pixelSize = 2.5*mm;
+
+double CGlobalParameters::distancetothedetector = 0.*cm;
+double CGlobalParameters::alboxcoverdistance = 1*cm;
+
+double CGlobalParameters::enableTextGeom = 0;
+
+double CGlobalParameters::sourceEnergy = 122*keV;
+
+double CGlobalParameters::sourceposX = 0*cm;
+double CGlobalParameters::sourceposY = 0*cm;
+double CGlobalParameters::sourceposZ = 0*cm;
+
+double CGlobalParameters::numberOfEvent = 1000;
+
+double CGlobalParameters::energyRes = 0.02;
+double CGlobalParameters::positionRes = 0*mm;
+
+double CGlobalParameters::bkEnergyLimit = 3*MeV;
+
+double CGlobalParameters::outputImagingData = 1;
+double CGlobalParameters::outputImagingDataBin = 1;
+double CGlobalParameters::outputElectronCloud = 1;
+double CGlobalParameters::outputInitParameters = 1;
+double CGlobalParameters::outputInitParaBin = 1;
+
+double CGlobalParameters::enableCollimator = 0;
+double CGlobalParameters::enableSourceHolder = 0;
+double CGlobalParameters::sourceHolderIsCo57 = 0;
+double CGlobalParameters::enableAlBoxCover = 0;
+
+double CGlobalParameters::displayTrack = 0;
+
+double CGlobalParameters::collimatorTestThickness = 1.0*cm;
+double CGlobalParameters::collimatorTestDiameter = 2.0*cm; // 3.5*cm di.
+double CGlobalParameters::collimatorTestHoleDiameter = 0.7*mm;
+
+G4double CGlobalParameters::initEnergy = 0;
+G4ThreeVector CGlobalParameters::initpos = G4ThreeVector(0,0,0);
+G4ThreeVector CGlobalParameters::initdir = G4ThreeVector(0,0,1);
+
+char *   CGlobalParameters::m_pEntryPointer[100];
+double * CGlobalParameters::m_pEntryVarAddress[100];
+int      CGlobalParameters::m_bEntryUnit[100];
+int      CGlobalParameters::m_nEntryNum = 0;       
+char *   CGlobalParameters::m_pEntryUnitstr[100];
+double   CGlobalParameters::m_fEntryUnit[100];
+
+//New input files
+int CGlobalParameters::pixenergy = 1;
+int CGlobalParameters::bineclouds = 1;
+int CGlobalParameters::txteclouds = 1;
+int CGlobalParameters::stepview = 1;
+int CGlobalParameters::pixnumber = 20;
+
+CGlobalParameters::CGlobalParameters(void)
+{
+  
+}
+
+CGlobalParameters::~CGlobalParameters(void)
+{
+}
+
+int CGlobalParameters::LoadParameters()
+{
+  InitialEntries();  
+  
+  std::ifstream ifs;
+  char str[1000];
+  char ach;
+  char unitstr[4];
+  
+  ifs.open("settings.ini");
+  if (ifs.fail()) { G4cout << "ERROR: Parameter file, settings.ini not exist, exit..." << G4endl; return 1; }
+  
+  G4cout << "start to reading parameters, Total number is " << m_nEntryNum << G4endl;
+  
+  int bfound = 0; 
+  while (!ifs.eof())
+  {
+    ifs >> str;
+    if ( strcmp(str, "#") == 0 ) {ifs.getline(str, 1000); continue;}
+    
+    ifs >> ach;
+    if ( ach != '=' ) { G4cout << "ERROR: one line format error in setting.ini" << G4endl; ifs.getline(str, 1000); continue; }
+    
+    bfound = 0;
+    for (int i=0; i<m_nEntryNum; i++)
+    { 
+      if ( strcmp(str, m_pEntryPointer[i]) == 0 )
+      {
+        ifs >> *(m_pEntryVarAddress[i]);
+        if (m_bEntryUnit[i])
+        {
+          ifs >> unitstr;
+          *(m_pEntryVarAddress[i]) *= GetUnit(unitstr);
+        }
+        bfound = 1;
+      }
+      
+    }
+    if(!bfound) { ifs.getline(str, 1000); }
+  }
+  
+  return 0;
+}
+  
+G4double CGlobalParameters::GetUnit(char * unitstr)
+{
+  G4double unit=0;
+  
+  if ( strcmp(unitstr, "mm") == 0 ) { unit = mm; }
+  else if ( strcmp(unitstr, "cm") == 0 ) { unit = cm; }
+  else if ( strcmp(unitstr, "m") == 0 ) { unit = m; }
+  else if ( strcmp(unitstr, "km") == 0 ) { unit = km; }
+  else if ( strcmp(unitstr, "eV") == 0 ) { unit = eV; } 
+  else if ( strcmp(unitstr, "keV") == 0 ) { unit = keV; }
+  else if ( strcmp(unitstr, "MeV") == 0 ) { unit = MeV; }
+  else { unit = 0; }
+  
+  return unit;
+}
+  
+void CGlobalParameters::print()
+{
+  G4cout << " -----------------------------------------------------------" << G4endl;
+  G4cout << " Loaded Parameters" << G4endl;
+  G4cout << " -----------------------------------------------------------" << G4endl;
+  
+  for (int i=0; i<m_nEntryNum; i++)
+  {
+    if (m_bEntryUnit[i]) G4cout << m_pEntryPointer[i] << " = " << *(m_pEntryVarAddress[i])/m_fEntryUnit[i] << m_pEntryUnitstr[i]  << G4endl;
+    else G4cout << m_pEntryPointer[i] << " = " << *(m_pEntryVarAddress[i]) << G4endl;
+  }
+  G4cout << " -----------------------------------------------------------" << G4endl;
+  G4cout << " End of Loaded Parameters Display" << G4endl;
+  G4cout << " -----------------------------------------------------------" << G4endl;
+}
+  
+int CGlobalParameters::RegisterEntry(const char * tag, double * varAddress, int bUnit, double unit, const char * unitstr)
+{
+  char * newEntry = new char[100];
+  char * newunitstr = new char[100];
+  strcpy(newEntry, tag);
+  strcpy(newunitstr, unitstr);
+  m_pEntryPointer[m_nEntryNum] = newEntry;
+  m_pEntryUnitstr[m_nEntryNum] = newunitstr;
+  m_fEntryUnit[m_nEntryNum] = unit;
+  m_pEntryVarAddress[m_nEntryNum] = varAddress;
+  m_bEntryUnit[m_nEntryNum] = bUnit;
+  
+  m_nEntryNum ++;
+  return 0;
+}
+  
+int CGlobalParameters::InitialEntries()
+{
+  RegisterEntry("detType", &detType, 0, 0, "");
+  
+  RegisterEntry("detSizeX", &detsizeX, 1, mm, "mm");
+  RegisterEntry("detSizeY", &detsizeY, 1, mm, "mm");
+  RegisterEntry("detSizeZ", &detsizeZ, 1, mm, "mm");
+  RegisterEntry("detDeadZ", &detdeadZ, 1, mm, "mm");
+  
+  RegisterEntry("detIntvX", &detintvX, 1, mm, "mm");
+  RegisterEntry("detIntvY", &detintvY, 1, mm, "mm");
+  RegisterEntry("detIntvZ", &detintvZ, 1, mm, "mm");
+  
+  RegisterEntry("detMatrixX", &detmatrixX, 0, 0, "");
+  RegisterEntry("detMatrixY", &detmatrixY, 0, 0, "");
+  RegisterEntry("detMatrixZ", &detmatrixZ, 0, 0, "");
+  
+  RegisterEntry("pixelSize", &pixelSize, 1, mm, "mm");
+  
+  RegisterEntry("enableTextGeometry", &enableTextGeom, 0, 0, "");
+  
+  RegisterEntry("sourceEnergy", &sourceEnergy, 1, keV, "keV");
+  RegisterEntry("sourcePosX", &sourceposX, 1, mm, "mm");
+  RegisterEntry("sourcePosY", &sourceposY, 1, mm, "mm");
+  RegisterEntry("sourcePosZ", &sourceposZ, 1, mm, "mm");
+  
+  RegisterEntry("backgroundEnergyLimit", &bkEnergyLimit, 1, MeV, "MeV");
+  
+  RegisterEntry("numberOfEvent", &numberOfEvent, 0, 0, "");
+  
+  RegisterEntry("energyResolution", &energyRes, 0, 0, "");
+  RegisterEntry("depthResolution", &positionRes, 1, mm, "mm");
+  
+  RegisterEntry("outputImagingDataInText", &outputImagingData, 0, 0, "");
+  RegisterEntry("outputImagingDataInBinary", &outputImagingDataBin, 0, 0, "");
+  RegisterEntry("outputElectronCloud", &outputElectronCloud, 0, 0, "");
+  RegisterEntry("outputInitParametersInText", &outputInitParameters, 0, 0, "");
+  RegisterEntry("outputInitParametersInBinary", &outputInitParaBin, 0, 0, "");
+  
+  //New Output Files
+  RegisterEntry("pixenergy", &pixenergy, 0, 0, "");
+  RegisterEntry("bineclouds", &bineclouds, 0, 0, "");
+  RegisterEntry("txteclouds", &txteclouds, 0, 0, "");
+  RegisterEntry("stepview", &stepview, 0, 0, "");
+  RegisterEntry("pixnumber", &pixnumber, 0, 0, "");
+
+  RegisterEntry("enableCollimator", &enableCollimator, 0, 0, "");
+  RegisterEntry("enableSourceHolder", &enableSourceHolder, 0, 0, "");
+  RegisterEntry("sourceHolderIsCo57", &sourceHolderIsCo57, 0, 0, "");
+
+  RegisterEntry("enableAlBoxCover", &enableAlBoxCover, 0, 0, "");
+  
+  RegisterEntry("displayTrackDetails", &displayTrack, 0, 0, "");
+  RegisterEntry("distanceToTheDetector", &distancetothedetector, 1, cm, "cm");
+  RegisterEntry("AlBoxCoverDistance", &alboxcoverdistance, 1, cm, "cm");
+
+  RegisterEntry("collimatorTestThickness", &collimatorTestThickness, 1, cm, "cm");
+  RegisterEntry("collimatorTestDiameter", &collimatorTestDiameter, 1, cm, "cm");
+  RegisterEntry("collimatorTestHoleDiameter", &collimatorTestHoleDiameter, 1, cm, "cm");
+  
+  return 0;
+}

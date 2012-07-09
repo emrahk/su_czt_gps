@@ -1,0 +1,75 @@
+#
+# Macro file for the initialization phase of "exampleRE02.cc"
+# when runing in interactive mode
+#
+# Sets some default verbose
+#
+/random/resetEngineFrom currentEvent.rndm
+/control/saveHistory
+
+/run/initialize
+
+/geometry/test/grid_test
+/geometry/test/run
+
+/control/verbose  0
+/run/verbose 0
+/event/verbose    0
+/tracking/verbose 0
+
+#For disk source, isotropic radiation, monoenergetic
+/gps/particle gamma
+/gps/direction 0.0 1.0 0.0
+/gps/pos/type Surface
+/gps/pos/shape Cylinder
+/gps/ang/type iso
+#/gps/pos/radius 1.5 mm # For old source
+/gps/pos/radius 2.665 mm
+/gps/pos/halfy 0.36 mm
+#/gps/source/show
+/gps/ang/mintheta 0. deg
+/gps/ang/maxtheta 15.0 deg
+/gps/ene/mono 122 keV
+
+# For Point source
+#/gps/particle gamma
+#/gps/direction 0 0 1
+#/gps/pos/type Point
+#/gps/ang/type iso
+#/gps/ang/mintheta 0. deg
+#/gps/ang/maxtheta 6. deg
+#/gps/ang/minphi 139. deg
+#/gps/ang/maxphi 141. deg
+#/gps/energy 122 keV
+
+/vis/scene/create
+/vis/open DAWNFILE
+/vis/drawVolume world
+/vis/scene/add/volume
+/vis/scene/add/trajectories
+/vis/scene/add/hits
+
+/vis/viewer/set/style solid
+/vis/viewer/zoom 0.6
+
+/vis/viewer/set/background black 
+#/vis/viewer/set/viewpointVector 1 0 0 
+
+/vis/viewer/set/viewpointThetaPhi 90 0
+/vis/viewer/set/hiddenEdge true
+/vis/scene/endOfEventAction accumulate -1
+
+#/run/beamOn 150
+
+###/run/setCut 0.01 mm
+###/cuts/setLowEdge 250 eV
+
+#/run/initialize
+#/process/em/deexcitation World true true true
+#/process/em/deexcitation CZTDead_log true true true
+#/process/em/deexcitation CZTDead_box true true true
+/process/em/fluo true
+/process/em/auger true
+/process/em/pixe true
+/process/em/pixeXSmodel ecpssr_interpolated
+
