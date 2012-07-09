@@ -1,0 +1,57 @@
+Cadmium(Cd)
+Label	Orbital	 eV [literature reference]
+K	1s	 26711 [1]
+LI	2s	 4018 [1]
+LII	2p1/2	 3727 [1]
+LIII	2p3/2	 3538 [1]
+MI	3s	 772 [3]
+MII	3p1/2	 652.6 [3]
+MIII	3p3/2	 618.4 [3]
+MIV	3d3/2	 411.9 [3]
+MV	3d5/2    405.2 [3]
+NI	4s       109.8 [3]
+NII	4p1/2	 63.9 [3, one-particle approximation not valid owing to short core-hole lifetime]
+NIII	4p3/2    63.9 [3, one-particle approximation not valid owing to short core-hole lifetime]
+NIV	4d3/2	 11.7 [3]
+NV	4d5/2	 10.7 [3]
+http://www.webelements.com/cadmium/orbital_properties.html
+	Ka2		Ka1
+Cd	22984.05	23173.98
+http://hyperphysics.phy-astr.gsu.edu/hbase/tables/kxray.html
+
+Tellurium(Te)
+Label	Orbital	eV [literature reference]
+K	1s	31814 [1]
+LI	2s	4939 [1]
+LII	2p1/2	4612 [1]
+LIII	2p3/2	4341 [1]
+MI	3s	1006 [3]
+MII	3p1/2	870.8 [3]
+MIII	3p3/2	820.8 [3]
+MIV	3d3/2	583.4 [3]
+MV	3d5/2	573 [3]
+NI	4s	169.4 [3]
+NII	4p1/2	103.3 [3, one-particle approximation not valid owing to short core-hole lifetime]
+NIII	4p3/2	103.3 [3, one-particle approximation not valid owing to short core-hole lifetime]
+NIV	4d3/2	41.9 [3]
+NV	4d5/2	40.4 [3]
+http://www.webelements.com/tellurium/orbital_properties.html
+	Ka2		Ka1
+Te	27201.99	27472.57
+http://hyperphysics.phy-astr.gsu.edu/hbase/tables/kxray.html
+
+Zinc(Zn)
+Label	Orbital	eV [literature reference]
+K	1s	9659 [1]
+L I	2s	1196.2 [2]
+L II	2p1/2	1044.9 [2]
+L III	2p3/2	1021.8 [2]
+M I	3s	139.8 [2]
+M II	3p1/2	91.4 [2]
+M III	3p3/2	88.6 [2]
+M IV	3d3/2	10.2 [2]
+M V	3d5/2   10.1 [2]
+http://www.webelements.com/zinc/orbital_properties.html
+	Ka2		Ka1
+Zn	8615.823	8638.906
+http://hyperphysics.phy-astr.gsu.edu/hbase/tables/kxray.html

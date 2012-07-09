@@ -1,0 +1,75 @@
+#include "ExGlobalParameters.hh"
+#include "fstream.h"
+
+//using namespace std;
+
+int CGlobalParameters::detType = 0; // 0: CZT, 1: HgI2
+
+double CGlobalParameters::detsizeX = 20*mm;
+double CGlobalParameters::detsizeY = 20*mm;
+double CGlobalParameters::detsizeZ = 15*mm;
+
+double CGlobalParameters::detdeadZ = 0;
+
+double CGlobalParameters::detintvX = 20*mm;
+double CGlobalParameters::detintvY = 20*mm;
+double CGlobalParameters::detintvZ = 20*mm;
+
+int CGlobalParameters::eventType = 1;
+long CGlobalParameters::numberOfEvent = 1000;
+
+CGlobalParameters::CGlobalParameters(void)
+{
+  
+}
+
+CGlobalParameters::~CGlobalParameters(void)
+{
+}
+
+int CGlobalParameters::LoadParameters()
+{
+  std::ifstream ifs;
+  char str[1000];
+  char ach;
+  char unitstr[4];
+  double paras[10];
+  int i = 0;
+  double unit;
+  //char *keywards[10] = {"detType", "detsizeX", "detsizeY", "detsizeZ", "detdeadZ", "detintvX", "detintvY", "detintvZ", "eventType", "numberOfEvent"};
+
+
+  ifs.open("settings.ini");
+  if (ifs.fail()) { G4cout << "ERROR: Parameter file, settings.ini not exist, exit..." << G4endl; return 1; }
+  
+  while (!ifs.eof())
+    {
+      ifs >> str;
+      ifs >> ach;
+      if ( ach != '=' ) { G4cout << "ERROR: format error in setting.ini" << G4endl; return 1; }
+
+	G4cout << str << strcmp(str, "detType") << G4endl;
+      if ( strcmp(str, "detType") == 0 ) { ifs >> detType; }
+      if ( strcmp(str, "detSizeX") == 0 ) { ifs >> detsizeX; ifs >> unitstr; detsizeX *= GetUnit(unitstr); }
+      if ( strcmp(str, "detSizeY") == 0 ) { ifs >> detsizeY; ifs >> unitstr; detsizeY *= GetUnit(unitstr); }
+      if ( strcmp(str, "detSizeZ") == 0 ) { ifs >> detsizeZ; ifs >> unitstr; detsizeZ *= GetUnit(unitstr); }
+      if ( strcmp(str, "detDeadZ") == 0 ) { ifs >> detdeadZ; ifs >> unitstr; detdeadZ *= GetUnit(unitstr); }
+      if ( strcmp(str, "detIntvX") == 0 ) { ifs >> detintvX; ifs >> unitstr; detintvX *= GetUnit(unitstr); }
+      if ( strcmp(str, "detIntvY") == 0 ) { ifs >> detintvY; ifs >> unitstr; detintvY *= GetUnit(unitstr); }
+      if ( strcmp(str, "detIntvZ") == 0 ) { ifs >> detintvZ; ifs >> unitstr; detintvZ *= GetUnit(unitstr); }
+      if ( strcmp(str, "eventType") == 0 ) { ifs >> eventType; }
+      if ( strcmp(str, "numberOfEvent") == 0 ) { ifs >> numberOfEvent; }
+    }
+}
+
+G4double CGlobalParameters::GetUnit(char * unitstr)
+{
+  G4double unit=0;
+
+  if ( strcmp(unitstr, "mm") == 0 ) { unit = mm; }
+  else if ( strcmp(unitstr, "cm") == 0 ) { unit = cm; }
+  else if ( strcmp(unitstr, "m") == 0 ) { unit = m; }
+  else { unit = 0; }
+
+  return unit;
+}

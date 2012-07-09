@@ -1,0 +1,21 @@
+#ifndef ExDetectorReadout
+#define ExDetectorReadout 1
+
+#include "ExDetectorReadout.hh"
+
+ExDetectorReadout::ExDetectorReadout()
+{
+}
+
+ExDetectorReadout::~ExDetectorReadout()
+{
+}
+
+int ExDetectorReadout::GetChannelNumber(double x, double y)
+{
+}
+
+int ExDetectorReadout::GetWaveformAt(double x, double y, double z, int len, double * wf)
+{
+
+}

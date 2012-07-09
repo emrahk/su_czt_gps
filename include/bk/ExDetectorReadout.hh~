@@ -1,0 +1,13 @@
+
+
+class ExDetectorReadout {
+
+public:
+ExDetectorReadout();
+virtual ~ExDetectorReadout();
+
+public:
+
+static int GetChannelNumber(double x, double y);
+static int GetWaveformAt(double x, double y, double z, int len, double * wf);
+}

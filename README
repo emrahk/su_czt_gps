@@ -1,0 +1,28 @@
+Update 1.1
+
+1. 	Output files: 
+	(1) for imaging people: 	image_output.txt / text file mode
+		format:  # of interaction, energy, pixel x, pixel y, depth
+	(2) electron cloud output: 	electron_clouds.dat / binary mode
+		format: number of points in the cloud, array of x, array of y, array of z, array of energy deposition at each point
+	(3) initial parameters output: 	init_parameters.txt / text file mode
+		format: initial energy, initial position(x, y, z), initial direction(x, y, z)
+	(4) for the case the details of electron track won't need to be tracked:  gamma_interactions.dat / binary mode
+		format: number of interaction, array of x, array of y, array of z, array of energy deposition at each point
+		note: energy is assumed to be deposited at the point where gamma interacts with the detector
+
+	These files can be output / not output by turn on/off the options in settings.ini
+
+2.	collimators
+	a collimator option is put into the program. The parameters can be set in settings.ini
+
+3. 	physical process setting
+	several physical processes can be turn on/off by change the option in setting.ini
+
+4.	setup passive environment by the text gemometry file "g4geom.txt"
+	if "enableTextGeometry" is enabled, you can setup your passive environment for your problem. The format of g4geom.txt can be found in http://geant4.cern.ch/collaboration/working_groups/geometry/docs/textgeom/textgeom.pdf.  Please make sure you at least set up the "world" in g4geom.txt before enable the option "enableTextGeometry"
+	You will need Geant4.9.2 to run this feature!
+
+5. 	anode pixel size can be specified by user. Do remember to change this value if you change the detector size and want imaging output!
+
+ 	please turn off the option "displayTrackDetails" when you run the problem, otherwise too many output message will be given out

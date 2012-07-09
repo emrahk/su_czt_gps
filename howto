@@ -1,0 +1,61 @@
+HOW TO..
+
+1. COMPILE and RUN (Open two terminal) 
+   In the first terminal, go to su_czt_gps directory
+	
+	cd .../su_czt_gps/
+
+   Then compile (Sometimes "make clean" command is needed.)
+	
+	make
+
+   In the second terminal, go to su_czt_gps/bin/Linux-g++/ directory
+
+	cd .../su_czt_gps/bin/Linux-g++/
+   
+   Then, run the macro file
+
+	su_czt circlesource.mac
+
+2. CONTROL INITIALS
+   
+   User can control the initial values by changing the parameters in the settings.ini file (in su_czt_gps/bin/Linux-g++/settings.ini)
+   In Settings.ini, user can control the number of events, detector type(CZT,Hgl2 or TlBr), detector size, pixel size, source energy, collimator setup, source holder setup, enable boxcover, set output files (text, binary etc.), display track details. Setting.ini is connected to the ExGlobalParameters.cc (in su_czt_gps/src)
+   
+3. CONTROL OUTPUT FILES
+
+    Output files are defined in su_czt.cc, ExRun.cc (in su_czt_gps/src), settings.ini
+
+    If it is enabled in settings.ini and su_czt.cc, Output files can be gotten in the following. 
+The output file is created in the output directory inside su_czt_gps/bin/Linux-g++/
+
+	(1) for imaging people: 	image_output.txt / text file mode
+		format:  # of interaction, energy, pixel x, pixel y, depth
+	(2) electron cloud output: 	electron_clouds.dat / binary mode
+		format: number of points in the cloud, array of x, array of y, array of z, array of energy deposition at each point
+	(3) initial parameters output: 	init_parameters.txt / text file mode
+		format: initial energy, initial position(x, y, z), initial direction(x, y, z)
+	(4) for the case the details of electron track won't need to be tracked:  gamma_interactions.dat / binary mode
+		format: number of interaction, array of x, array of y, array of z, array of energy deposition at each point
+		note: energy is assumed to be deposited at the point where gamma interacts with the detector
+    In the output file, 
+	1st column defines number of pixels
+	2nd column defines total energy of electron (keV) (can be divided into two pixels)
+	3rd column defines pixel number in x direction
+	4th column defines pixel number in y direction
+	5th column defines pixel position in x direction
+	6th column defines pixel position in y direction
+	7th column defines absolute z value 
+	8th column defines physical process name
+
+   The output on the screen is created in ExRunAction.cc file in src directory. In the output on the screen, it is given passed time, total simulated events, events passed the detector, interacted events inside the detector, photopeak events.
+
+4. SET PARAMETERS
+
+    * Detector parameters are set in ExFlobalParameters.cc/.hh or ExDetectorConstruction.cc/.hh
+    * Collimator parameters and obtion can be set in settings.ini
+    * Physical process settings can be turn on/off by change the option in setting.ini
+    * Anode pixel size can be specified by user. Do remember to change this value if you change the detector size and want imaging output! Please turn off the option "displayTrackDetails" when you run the problem, otherwise too many output message will be given out.
+    * Source position is defined in ExPrimaryGeneratorAction. User can change the source position according to the position of the collimator and/or source holder for different sources (Co, Cd, Am and Cs). "defaultDistance" command changes according to the existence of the collimator and/or source holder and this command is related to the settings.ini file.
+  
+

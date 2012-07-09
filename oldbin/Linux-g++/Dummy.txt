@@ -1,0 +1,343 @@
+start to reading parameters, Total number is 38
+ -----------------------------------------------------------
+ Loaded Parameters
+ -----------------------------------------------------------
+detType = 0
+detSizeX = 10mm
+detSizeY = 10mm
+detSizeZ = 5mm
+detDeadZ = 0mm
+detIntvX = 12mm
+detIntvY = 12mm
+detIntvZ = 1mm
+detMatrixX = 1
+detMatrixY = 1
+detMatrixZ = 1
+pixelSize = 2.5mm
+enableTextGeometry = 0
+sourceType = 1
+SBRatio = 1
+sourceEnergy = 122keV
+sourcePosX = 0mm
+sourcePosY = 0mm
+sourcePosZ = 0mm
+sourceDirX = 0
+sourceDirY = 1
+sourceDirZ = 0
+backgroundEnergyLimit = 2MeV
+numberOfEvent = 10
+energyResolution = 0
+depthResolution = 0mm
+outputImagingDataInText = 1
+outputImagingDataInBinary = 0
+outputElectronCloud = 0
+outputInitParametersInText = 0
+outputInitParametersInBinary = 0
+enableCollimator = 0
+enableSourceHolder = 1
+sourceHolderIsCo57 = 1
+enableAlBoxCover = 1
+displayTrackDetails = 1
+distanceToTheDetector = 0cm
+AlBoxCoverDistance = 1cm
+ -----------------------------------------------------------
+ End of Loaded Parameters Display
+ -----------------------------------------------------------
+
+*************************************************************
+ Geant4 version Name: geant4-09-03-patch-01    (9-April-2010)
+                      Copyright : Geant4 Collaboration
+                      Reference : NIM A 506 (2003), 250-303
+                            WWW : http://cern.ch/geant4
+*************************************************************
+
+ -----------------------------------------------------------
+<<<<---- Collimator is NOT present! ---->>>>
+Source holder for Am, Co or Cd.
+ -----------------------------------------------------------
+
+phot:   for  gamma    SubType= 12
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+ LivermorePhElectric :     Emin=          0 eV         Emax=   10 TeV
+
+compt:   for  gamma    SubType= 13
+      Lambda tables from 100 eV  to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+    LivermoreCompton :     Emin=          0 eV         Emax=   10 TeV
+
+conv:   for  gamma    SubType= 14
+      Lambda tables from 1.022 MeV to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+ LivermoreConversion :     Emin=          0 eV         Emax=   10 TeV
+
+Rayl:   for  gamma    SubType= 11
+      Lambda tables from 100 eV  to 10 TeV in 200 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+   LivermoreRayleigh :     Emin=          0 eV         Emax=   100 GeV
+
+msc:   for e-    SubType= 10
+      Lambda tables from 100 eV  to 10 TeV in 77 bins, spline: 1
+      RangeFactor= 0.04, step limit type: 2, lateralDisplacement: 1, skin= 3, geomFactor= 2.5
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+          UrbanMsc92 :     Emin=          0 eV         Emax=   10 TeV
+
+eIoni:   for  e-    SubType= 2
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      finalRange(mm)= 0.1, dRoverRange= 0.2, integral: 1, fluct: 1, linLossLimit= 0.01
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+       LowEnergyIoni :     Emin=          0 eV         Emax=   10 TeV
+
+eBrem:   for  e-    SubType= 3
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      LPM flag: 1 for E > 1 GeV
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+           LowEnBrem :     Emin=          0 eV         Emax=   1 GeV
+            eBremRel :     Emin=          1 GeV        Emax=   10 TeV
+
+eIoni:   for  e+    SubType= 2
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      finalRange(mm)= 1, dRoverRange= 0.2, integral: 1, fluct: 1, linLossLimit= 0.01
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+        MollerBhabha :     Emin=          0 eV         Emax=   10 TeV
+
+eBrem:   for  e+    SubType= 3
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      LPM flag: 1 for E > 1 GeV
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               eBrem :     Emin=          0 eV         Emax=   1 GeV
+            eBremRel :     Emin=          1 GeV        Emax=   10 TeV
+
+annihil:   for  e+    SubType= 5
+      Lambda tables from 100 eV  to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+            eplus2gg :     Emin=          0 eV         Emax=   10 TeV
+
+msc:   for proton    SubType= 10
+      Lambda tables from 100 eV  to 10 TeV in 77 bins, spline: 1
+      RangeFactor= 0.2, stepLimitType: 0, latDisplacement: 1, skin= 3, geomFactor= 2.5
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+          UrbanMsc90 :     Emin=          0 eV         Emax=   10 TeV
+
+hIoni:   for  proton    SubType= 2
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      finalRange(mm)= 1, dRoverRange= 0.2, integral: 1, fluct: 1, linLossLimit= 0.01
+      NuclearStopping= 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               Bragg :     Emin=          0 eV         Emax=   2 MeV
+          BetheBloch :     Emin=          2 MeV        Emax=   10 TeV
+
+hBrems:   for  proton    SubType= 3
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               hBrem :     Emin=          0 eV         Emax=   10 TeV
+
+hPairProd:   for  proton    SubType= 4
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+           hPairProd :     Emin=          0 eV         Emax=   10 TeV
+
+hIoni:   for  anti_proton    SubType= 2
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      finalRange(mm)= 1, dRoverRange= 0.2, integral: 1, fluct: 1, linLossLimit= 0.01
+      NuclearStopping= 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               Bragg :     Emin=          0 eV         Emax=   2 MeV
+          BetheBloch :     Emin=          2 MeV        Emax=   10 TeV
+
+hIoni:   for  kaon+    SubType= 2
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      finalRange(mm)= 1, dRoverRange= 0.2, integral: 1, fluct: 1, linLossLimit= 0.01
+      NuclearStopping= 0
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               Bragg :     Emin=          0 eV         Emax=   1.05231 MeV
+          BetheBloch :     Emin=    1.05231 MeV        Emax=   10 TeV
+
+hIoni:   for  kaon-    SubType= 2
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      finalRange(mm)= 1, dRoverRange= 0.2, integral: 1, fluct: 1, linLossLimit= 0.01
+      NuclearStopping= 0
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               Bragg :     Emin=          0 eV         Emax=   1.05231 MeV
+          BetheBloch :     Emin=    1.05231 MeV        Emax=   10 TeV
+
+muMsc:   for mu+    SubType= 10
+      Lambda tables from 100 eV  to 10 TeV in 77 bins, spline: 1
+      RangeFactor= 0.2, step limit type: 0, lateralDisplacement: 1, polarAngleLimit(deg)= 0
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+          UrbanMsc90 :     Emin=          0 eV         Emax=   10 TeV
+
+muIoni:   for  mu+    SubType= 2
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      finalRange(mm)= 1, dRoverRange= 0.2, integral: 1, fluct: 1, linLossLimit= 0.01
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               Bragg :     Emin=          0 eV         Emax=   200 keV
+          BetheBloch :     Emin=        200 keV        Emax=   1 GeV
+        MuBetheBloch :     Emin=          1 GeV        Emax=   10 TeV
+
+muBrems:   for  mu+    SubType= 3
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+              MuBrem :     Emin=          0 eV         Emax=   10 TeV
+
+muPairProd:   for  mu+    SubType= 4
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+          muPairProd :     Emin=          0 eV         Emax=   10 TeV
+
+muIoni:   for  mu-    SubType= 2
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      finalRange(mm)= 1, dRoverRange= 0.2, integral: 1, fluct: 1, linLossLimit= 0.01
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               Bragg :     Emin=          0 eV         Emax=   200 keV
+          BetheBloch :     Emin=        200 keV        Emax=   1 GeV
+        MuBetheBloch :     Emin=          1 GeV        Emax=   10 TeV
+
+muBrems:   for  mu-    SubType= 3
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+              MuBrem :     Emin=          0 eV         Emax=   10 TeV
+
+muPairProd:   for  mu-    SubType= 4
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+          muPairProd :     Emin=          0 eV         Emax=   10 TeV
+
+hIoni:   for  pi+    SubType= 2
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      finalRange(mm)= 1, dRoverRange= 0.2, integral: 1, fluct: 1, linLossLimit= 0.01
+      NuclearStopping= 0
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               Bragg :     Emin=          0 eV         Emax=   297.504 keV
+          BetheBloch :     Emin=    297.504 keV        Emax=   10 TeV
+
+hBrems:   for  pi+    SubType= 3
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               hBrem :     Emin=          0 eV         Emax=   10 TeV
+
+hPairProd:   for  pi+    SubType= 4
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+           hPairProd :     Emin=          0 eV         Emax=   10 TeV
+
+msc:   for pi-    SubType= 10
+      Lambda tables from 100 eV  to 10 TeV in 77 bins, spline: 1
+      RangeFactor= 0.2, stepLimitType: 0, latDisplacement: 1, skin= 3, geomFactor= 2.5
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+          UrbanMsc90 :     Emin=          0 eV         Emax=   10 TeV
+
+hIoni:   for  pi-    SubType= 2
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      finalRange(mm)= 1, dRoverRange= 0.2, integral: 1, fluct: 1, linLossLimit= 0.01
+      NuclearStopping= 0
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               Bragg :     Emin=          0 eV         Emax=   297.504 keV
+          BetheBloch :     Emin=    297.504 keV        Emax=   10 TeV
+
+hBrems:   for  pi-    SubType= 3
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+               hBrem :     Emin=          0 eV         Emax=   10 TeV
+
+hPairProd:   for  pi-    SubType= 4
+      dE/dx and range tables from 100 eV  to 10 TeV in 77 bins
+      Lambda tables from threshold to 10 TeV in 77 bins, spline: 1
+      ===== EM models for the G4Region  DefaultRegionForTheWorld ======
+           hPairProd :     Emin=          0 eV         Emax=   10 TeV
+
+========= Table of registered couples ==============================
+
+Index : 0     used in the geometry : Yes     recalculation needed : No 
+ Material : Galactic
+ Range cuts        :  gamma  10 um     e-  1 um     e+  1 um  proton 1 cm 
+ Energy thresholds :  gamma  990 eV     e-  990 eV     e+  990 eV  proton 1 MeV
+ Region(s) which use this couple : 
+    DefaultRegionForTheWorld
+
+Index : 1     used in the geometry : Yes     recalculation needed : No 
+ Material : CZT
+ Range cuts        :  gamma  10 um     e-  1 um     e+  1 um  proton 1 cm 
+ Energy thresholds :  gamma  2.4362 keV    e-  2.82322 keV    e+  2.74457 keV proton 1 MeV
+ Region(s) which use this couple : 
+    DefaultRegionForTheWorld
+
+Index : 2     used in the geometry : Yes     recalculation needed : No 
+ Material : Aluminum
+ Range cuts        :  gamma  10 um     e-  1 um     e+  1 um  proton 1 cm 
+ Energy thresholds :  gamma  990 eV     e-  1.13397 keV    e+  1.10363 keV proton 1 MeV
+ Region(s) which use this couple : 
+    DefaultRegionForTheWorld
+
+Index : 3     used in the geometry : Yes     recalculation needed : No 
+ Material : Lead
+ Range cuts        :  gamma  10 um     e-  1 um     e+  1 um  proton 1 cm 
+ Energy thresholds :  gamma  5.995 keV    e-  6.75261 keV    e+  6.553 keV proton 1 MeV
+ Region(s) which use this couple : 
+    DefaultRegionForTheWorld
+
+====================================================================
+
+
+========================== Run 0 start. =============================
+--------------------------------------- End of Event ----------------------------------------
+--> trackID: 1 Info:  -->> Par:gamma || -->> Pr=122 keV || -->> Po=0 eV  || -->> DE=4.3397 keV || -->> TE=4.3397 keV || -->>  phot || -->> Pr(-2.7239445 2.0529641 2.5 mm ) || -->> Po(-2.7267655 2.0550902 2.4533971 mm ) || -->> Dr(-0.060358954,0.04549093,-0.9971396) || -->> Do(-0.060358954,0.04549093,-0.9971396)
+--> trackID: 3 Info:  -->> Par:gamma || -->> Pr=27.4653 keV || -->> Po=0 eV  || -->> DE=612.6 eV  || -->> TE=4.9523 keV || -->>  phot || -->> Pr(-2.7267655 2.0550902 2.4533971 mm ) || -->> Po(-2.7457492 2.0795659 2.4462413 mm ) || -->> Dr(-0.59714696,0.76990192,-0.22509229) || -->> Do(-0.59714696,0.76990192,-0.22509229)
+--> trackID: 5 Info:  -->> Par:gamma || -->> Pr=26.0754 keV || -->> Po=0 eV  || -->> DE=814.85 eV  || -->> TE=5.76715 keV || -->>  phot || -->> Pr(-2.7457492 2.0795659 2.4462413 mm ) || -->> Po(-2.754616 2.0733026 2.4700487 mm ) || -->> Dr(-0.33887198,-0.2393704,0.90987229) || -->> Do(-0.33887198,-0.2393704,0.90987229)
+--> trackID: 6 Info:  -->> Par:e- || -->> Pr=25.26055 keV || -->> Po=0 eV  || -->> DE=25.26055 keV || -->> TE=31.0277 keV || -->>  eIoni || -->> Pr(-2.754616 2.0733026 2.4700487 mm ) || -->> Po(-2.7544402 2.0734204 2.4705581 mm ) || -->> Dr(0.31867348,0.21347994,0.92351152) || -->> Do(0.31867348,0.21347994,0.92351152)
+--> trackID: 4 Info:  -->> Par:e- || -->> Pr=777.3 eV  || -->> Po=0 eV  || -->> DE=777.3 eV  || -->> TE=31.805 keV || -->>  eIoni || -->> Pr(-2.7457492 2.0795659 2.4462413 mm ) || -->> Po(-2.7457512 2.079566 2.4462446 mm ) || -->> Dr(-0.5177834,0.035731586,0.85476523) || -->> Do(-0.5177834,0.035731586,0.85476523)
+--> trackID: 2 Info:  -->> Par:e- || -->> Pr=90.195 keV || -->> Po=73.508958 keV || -->> DE=16.686042 keV || -->> TE=48.491042 keV || -->>  msc || -->> Pr(-2.7267655 2.0550902 2.4533971 mm ) || -->> Po(-2.7201723 2.0505426 2.4529757 mm ) || -->> Dr(0.47822773,-0.16502312,-0.86259238) || -->> Do(-0.43359314,-0.69412571,0.57461855)
+--> trackID: 2 Info:  -->> Par:e- || -->> Pr=73.508958 keV || -->> Po=0 eV  || -->> DE=73.508958 keV || -->> TE=122 keV || -->>  eIoni || -->> Pr(-2.7201723 2.0505426 2.4529757 mm ) || -->> Po(-2.7215288 2.048371 2.4547734 mm ) || -->> Dr(-0.43359314,-0.69412571,0.57461855) || -->> Do(-0.43359314,-0.69412571,0.57461855)
+==> Total Deposited Energy: 122keV Initial Particle Energy: 122keV If equal? 1 current peak events: 1
+--------------------------------------- End of Event ----------------------------------------
+--> trackID: 1 Info:  -->> Par:gamma || -->> Pr=122 keV || -->> Po=0 eV  || -->> DE=814.9 eV  || -->> TE=814.9 eV  || -->>  phot || -->> Pr(-1.1975216 -2.3628361 2.5 mm ) || -->> Po(-1.2774349 -2.5205133 -0.50294974 mm ) || -->> Dr(-0.026565604,-0.052416729,-0.99827188) || -->> Do(-0.026565604,-0.052416729,-0.99827188)
+--> trackID: 3 Info:  -->> Par:gamma || -->> Pr=30.9901 keV || -->> Po=0 eV  || -->> DE=9.6224 keV || -->> TE=10.4373 keV || -->>  phot || -->> Pr(-1.2774349 -2.5205133 -0.50294974 mm ) || -->> Po(-1.1731553 -2.5804824 -0.19759549 mm ) || -->> Dr(0.31773704,-0.18272416,0.93040586) || -->> Do(0.31773704,-0.18272416,0.93040586)
+--> trackID: 4 Info:  -->> Par:e- || -->> Pr=21.3677 keV || -->> Po=10.386076 keV || -->> DE=5.7758067 keV || -->> TE=16.213107 keV || -->>  eIoni || -->> Pr(-1.1731553 -2.5804824 -0.19759549 mm ) || -->> Po(-1.1737581 -2.5808976 -0.19825552 mm ) || -->> Dr(-0.083943641,-0.99414219,0.068079102) || -->> Do(-0.47637656,-0.23855378,0.84626088)
+--> trackID: 4 Info:  -->> Par:e- || -->> Pr=10.386076 keV || -->> Po=0 eV  || -->> DE=10.386076 keV || -->> TE=26.599183 keV || -->>  eIoni || -->> Pr(-1.1737581 -2.5808976 -0.19825552 mm ) || -->> Po(-1.1738219 -2.5809296 -0.19814201 mm ) || -->> Dr(-0.47637656,-0.23855378,0.84626088) || -->> Do(-0.47637656,-0.23855378,0.84626088)
+--> trackID: 5 Info:  -->> Par:e- || -->> Pr=5.205817 keV || -->> Po=0 eV  || -->> DE=5.205817 keV || -->> TE=31.805 keV || -->>  eIoni || -->> Pr(-1.1737581 -2.5808976 -0.19825552 mm ) || -->> Po(-1.1738008 -2.5808875 -0.19827423 mm ) || -->> Dr(-0.89541462,0.21103525,-0.39204181) || -->> Do(-0.89541462,0.21103525,-0.39204181)
+--> trackID: 2 Info:  -->> Par:e- || -->> Pr=90.195 keV || -->> Po=0 eV  || -->> DE=90.195 keV || -->> TE=122 keV || -->>  eIoni || -->> Pr(-1.2774349 -2.5205133 -0.50294974 mm ) || -->> Po(-1.2773722 -2.5240072 -0.50556869 mm ) || -->> Dr(0.014358341,-0.80007423,-0.59972915) || -->> Do(0.014358341,-0.80007423,-0.59972915)
+==> Total Deposited Energy: 122keV Initial Particle Energy: 122keV If equal? 1 current peak events: 2
+--------------------------------------- End of Event ----------------------------------------
+--------------------------------------- End of Event ----------------------------------------
+--------------------------------------- End of Event ----------------------------------------
+--------------------------------------- End of Event ----------------------------------------
+--------------------------------------- End of Event ----------------------------------------
+--> trackID: 1 Info:  -->> Par:gamma || -->> Pr=122 keV || -->> Po=0 eV  || -->> DE=4.3397 keV || -->> TE=4.3397 keV || -->>  phot || -->> Pr(-4.2738569 -3.2611444 2.5 mm ) || -->> Po(-4.4411772 -3.3888172 0.73826275 mm ) || -->> Dr(-0.094304026,-0.071958198,-0.99293946) || -->> Do(-0.094304026,-0.071958198,-0.99293946)
+--> trackID: 3 Info:  -->> Par:gamma || -->> Pr=27.4653 keV || -->> Po=0 eV  || -->> DE=3.5354 keV || -->> TE=7.8751 keV || -->>  phot || -->> Pr(-4.4411772 -3.3888172 0.73826275 mm ) || -->> Po(-4.4302459 -3.3867029 0.73548732 mm ) || -->> Dr(0.95265151,0.18425857,-0.24187577) || -->> Do(0.95265151,0.18425857,-0.24187577)
+--> trackID: 5 Info:  -->> Par:gamma || -->> Pr=23.1526 keV || -->> Po=0 eV  || -->> DE=4.9142 keV || -->> TE=12.7893 keV || -->>  phot || -->> Pr(-4.4302459 -3.3867029 0.73548732 mm ) || -->> Po(-4.4317589 -3.3838438 0.74242232 mm ) || -->> Dr(-0.19772428,0.37363351,0.90625775) || -->> Do(-0.19772428,0.37363351,0.90625775)
+--> trackID: 6 Info:  -->> Par:e- || -->> Pr=18.2384 keV || -->> Po=0 eV  || -->> DE=18.2384 keV || -->> TE=31.0277 keV || -->>  eIoni || -->> Pr(-4.4317589 -3.3838438 0.74242232 mm ) || -->> Po(-4.4318161 -3.3841264 0.74257514 mm ) || -->> Dr(-0.17510807,-0.86602182,0.46834107) || -->> Do(-0.17510807,-0.86602182,0.46834107)
+--> trackID: 4 Info:  -->> Par:e- || -->> Pr=777.3 eV  || -->> Po=0 eV  || -->> DE=777.3 eV  || -->> TE=31.805 keV || -->>  eIoni || -->> Pr(-4.4302459 -3.3867029 0.73548732 mm ) || -->> Po(-4.4302432 -3.3867023 0.73549012 mm ) || -->> Dr(0.68212428,0.16580082,0.71219137) || -->> Do(0.68212428,0.16580082,0.71219137)
+--> trackID: 2 Info:  -->> Par:e- || -->> Pr=90.195 keV || -->> Po=0 eV  || -->> DE=90.195 keV || -->> TE=122 keV || -->>  eIoni || -->> Pr(-4.4411772 -3.3888172 0.73826275 mm ) || -->> Po(-4.4369645 -3.3898092 0.73768047 mm ) || -->> Dr(0.96468992,-0.22714237,-0.13334053) || -->> Do(0.96468992,-0.22714237,-0.13334053)
+==> Total Deposited Energy: 122keV Initial Particle Energy: 122keV If equal? 1 current peak events: 3
+--------------------------------------- End of Event ----------------------------------------
+--------------------------------------- End of Event ----------------------------------------
+--------------------------------------- End of Event ----------------------------------------
+Passed Time: User=0s Real=0s Sys=0.01s|
+Total simulated Events: 10|Events Passed the detector: 3| Events Interacted: 3| Photopeak Events: 3
+
+
+imaging_output.txt
+
+1       122     1       3       -2.73   2.06    0.0422  phot
+1       122     2       1       -1.28   -2.52   2.93    phot
+1       122     1       1       -4.44   -3.39   1.76    phot

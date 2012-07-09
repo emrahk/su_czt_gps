@@ -1,0 +1,28 @@
+//#pragma once
+#include "globals.hh"
+#include "G4ThreeVector.hh"
+
+class CGlobalParameters
+{
+public:
+	CGlobalParameters(void);
+	~CGlobalParameters(void);
+
+  static int LoadParameters();
+  static G4double GetUnit(char * unistr)
+
+  static int detType;
+
+  static double detsizeX;
+  static double detsizeY;
+  static double detsizeZ;
+  
+  static double detdeadZ;
+
+  static double detintvX;
+  static double detintvY;
+  static double detintvZ;
+
+  static int eventType;
+  static long numberOfEvent;
+};
